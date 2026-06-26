@@ -42,3 +42,19 @@ def contaminate_onmanifold(mani, X, frac, seed=0):
     idx = r.choice(n, int(frac * n), replace=False); mask[idx] = True
     Xc = X.copy(); Xc[idx] = mani.embed(r.normal(size=(len(idx), mani.d)))
     return Xc, mask
+
+
+def contaminate_onmanifold_local(mani, X, frac, loc=2.0, scale=0.2, seed=0):
+    """MisID from a RESTRICTED region of the manifold (mimics accessible-area
+    background, which occupies a specific low-suitability corner of feature space
+    rather than the whole manifold). Still genuinely on-manifold.
+
+    loc   : centre of the restricted latent region (shifts WHERE on the manifold).
+    scale : width of the region (smaller = more concentrated). 1.0 = full manifold.
+    """
+    r = np.random.default_rng(seed)
+    n = len(X); mask = np.zeros(n, dtype=bool)
+    idx = r.choice(n, int(frac * n), replace=False); mask[idx] = True
+    znew = r.normal(loc=loc, scale=scale, size=(len(idx), mani.d))
+    Xc = X.copy(); Xc[idx] = mani.embed(znew)
+    return Xc, mask

@@ -29,6 +29,24 @@ print(f"\nON-manifold contamination (misID, negative control):")
 print(f"  local-ID AUC={roc_auc_score(mon, local_id_mle(Xon, K)):.3f}   "
       f"naive-dist AUC={roc_auc_score(mon, knn_dist(Xon, K)):.3f}   (both ~0.5 = blind)")
 
+# --- separating the two effects: shift (loc) vs concentration (scale) ---
+from sdmgeo.synthetic import contaminate_onmanifold_local
+
+print("\nTEST A - isolate SHIFT (scale fixed at 1.0, vary loc):")
+print("  loc    local-ID AUC   naive-dist AUC")
+for loc in [0.0, 1.0, 2.0, 3.0]:
+    Xl, ml = contaminate_onmanifold_local(m, X, FRAC, loc=loc, scale=1.0, seed=2)
+    print(f"  {loc:4.1f}   {roc_auc_score(ml, local_id_mle(Xl, K)):.3f}          "
+          f"{roc_auc_score(ml, knn_dist(Xl, K)):.3f}")
+
+print("\nTEST B - isolate CONCENTRATION (loc fixed at 0.0, vary scale):")
+print("  scale   local-ID AUC   naive-dist AUC")
+for scale in [1.0, 0.5, 0.2, 0.1]:
+    Xl, ml = contaminate_onmanifold_local(m, X, FRAC, loc=0.0, scale=scale, seed=2)
+    print(f"  {scale:4.2f}    {roc_auc_score(ml, local_id_mle(Xl, K)):.3f}          "
+          f"{roc_auc_score(ml, knn_dist(Xl, K)):.3f}")
+
+
 fig, ax = plt.subplots(1, 2, figsize=(11, 4))
 ax[0].plot(s_cl, id_cl, "o-", label="clean"); ax[0].plot(s_co, id_co, "s-", label="off-manifold contaminated")
 ax[0].axhline(D, color="k", lw=0.8, label="true ID"); ax[0].set_xscale("log"); ax[0].invert_xaxis()
