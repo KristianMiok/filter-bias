@@ -199,3 +199,35 @@ Figure 6. Scatter plots of all-record vs risk-aware predictions.
 4. Compare all-record, high-only, remove-high-risk, and risk-weighted models.
 5. If possible, project predictions to real environmental raster/grid space.
 6. Write a compact methods/results draft.
+
+## Analysis 6: Multispecies SDM consequence analysis
+
+The SDM-like consequence analysis was extended to seven candidate species:
+
+- Pacifastacus leniusculus
+- Astacus astacus
+- Faxonius limosus
+- Pontastacus leptodactylus
+- Procambarus clarkii
+- Austropotamobius pallipes
+- Austropotamobius torrentium
+
+Across species, removing high environmental-accuracy-risk presences substantially changed predicted suitability rankings on the background set.
+
+Mean prediction-shift statistics across seven species:
+
+- all vs remove high-risk:
+  - mean top-10% Jaccard = 0.507
+  - range = 0.410–0.616
+  - mean top-5% Jaccard = 0.434
+  - mean p95 absolute prediction difference = 0.258
+
+- all vs risk-weighted:
+  - mean top-10% Jaccard = 0.737
+  - range = 0.603–0.834
+  - mean top-5% Jaccard = 0.630
+  - mean p95 absolute prediction difference = 0.151
+
+Interpretation:
+
+Risk-aware filtering and weighting produce consistent changes in SDM-like suitability predictions across multiple species. Removing high-risk records produces stronger shifts, while risk-weighting gives a more conservative adjustment that retains more of the original suitability ranking.
