@@ -5,3 +5,7 @@ __pycache__/
 figures/*.png
 .DS_Store
 data/
+.venv/
+__pycache__/
+.venv/
+__pycache__/

@@ -3,7 +3,13 @@ name = "sdmgeo"
 version = "0.1.0"
 description = "Geometric detection of contamination in SDM features (intrinsic dimension)"
 requires-python = ">=3.10"
-dependencies = ["numpy<2", "scipy", "scikit-learn", "matplotlib"]
+dependencies = [
+    "numpy<2",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+    "pandas>=2.3.3",
+]
 
 [project.optional-dependencies]
 geometry = ["dadapy"]
