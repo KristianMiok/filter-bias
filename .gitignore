@@ -9,3 +9,6 @@ data/
 __pycache__/
 .venv/
 __pycache__/
+data/
+reports/odonata_de_annotated.csv
+*.zip
