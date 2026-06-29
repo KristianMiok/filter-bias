@@ -1,0 +1,26 @@
+env_var,group,definition,unit,SMD,direction_in_high_quality
+l_CLI25,Climate,Temperature annual range (bio5 – bio6) [minimum],°C,0.1609502540825705,higher
+l_CLI27,Climate,Temperature annual range (bio5 – bio6) [mean],°C,0.1604386604102726,higher
+l_CLI13,Climate,Temperature seasonality (standard deviation × 100) [minimum],°C/100,0.1603301473816559,higher
+l_CLI15,Climate,Temperature seasonality (standard deviation × 100) [mean],°C/100,0.1599393938152983,higher
+l_CLI26,Climate,Temperature annual range (bio5 – bio6) [maximum],°C,0.1597011499200015,higher
+l_CLI14,Climate,Temperature seasonality (standard deviation × 100) [maximum],°C/100,0.1593340815570339,higher
+l_SOL47,Soil,Soil acidity (WRB class-based) [mean],pH,0.1552158618477238,higher
+l_SOL45,Soil,Soil acidity (WRB class-based) [minimum],pH,0.1529297110515529,higher
+l_SOL42,Soil,"Soil pH in H2O and KCl solution, multiplied by 10 (pH in H2O x 10) [maximum]",pH,-0.1496656509865831,lower
+l_SOL46,Soil,Soil acidity (WRB class-based) [maximum],pH,0.1460505787607083,higher
+l_SOL43,Soil,"Soil pH in H2O and KCl solution, multiplied by 10 (pH in H2O x 10) [mean]",pH,-0.1420346552862863,lower
+l_TOP29,Topography,Distance between focal grid cell and the outlet grid cell in the network [minimum],m,0.1400026291916211,higher
+l_TOP31,Topography,Distance between focal grid cell and the outlet grid cell in the network [mean],m,0.1399800310679477,higher
+l_TOP114,Topography,Distance to outlet (distance of current stream init from outlet),m,0.1399738130480648,higher
+l_TOP30,Topography,Distance between focal grid cell and the outlet grid cell in the network [maximum],m,0.1399602433148458,higher
+l_CLI53,Climate,Precipitation of driest month [minimum],kg/m²,0.1399217950658693,higher
+l_CLI55,Climate,Precipitation of driest month [mean],kg/m²,0.1378974088881303,higher
+l_CLI65,Climate,Precipitation of driest quarter [minimum],kg/m²,0.1369506805691763,higher
+l_CLI54,Climate,Precipitation of driest month [maximum],kg/m²,0.1356433167899846,higher
+l_CLI67,Climate,Precipitation of driest quarter [mean],kg/m²,0.1348355305121493,higher
+l_SOL41,Soil,"Soil pH in H2O and KCl solution, multiplied by 10 (pH in H2O x 10) [minimum]",pH,-0.1327426765972301,lower
+l_CLI66,Climate,Precipitation of driest quarter [maximum],kg/m²,0.1324668777186674,higher
+l_CLI69,Climate,Precipitation of warmest quarter [minimum],kg/m²,0.1306273108425553,higher
+l_TOP109,Topography,Topological dimension of streams,–,0.1304048386265645,higher
+l_CLI37,Climate,Mean temperature of warmest quarter [minimum],°C,0.128278463102817,higher
