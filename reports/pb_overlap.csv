@@ -1,0 +1,8 @@
+species,status,n_presence,pb_separability_auc,centroid_mahalanobis,filter_ipw
+Faxonius limosus,Alien,8176,0.6261,1.309,0.019
+Pontastacus leptodactylus,Introduced,3033,0.6385,1.276,0.0092
+Astacus astacus,Native,5548,0.6628,1.381,0.0206
+Pacifastacus leniusculus,Alien,6551,0.6759,1.346,0.0073
+Austropotamobius pallipes,Native,4741,0.8041,1.554,0.0214
+Procambarus clarkii,Alien,39725,0.8161,1.458,0.0159
+Austropotamobius torrentium,Native,3315,0.8309,1.586,0.0121

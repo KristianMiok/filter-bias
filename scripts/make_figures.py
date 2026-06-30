@@ -22,7 +22,7 @@ TAB = plt.cm.tab10.colors
 
 def save(fig, name):
     for ext in ("pdf", "png"):
-        fig.savefig(f"/home/claude/pkg/{name}.{ext}")
+        fig.savefig(f"{name}.{ext}", dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -62,17 +62,27 @@ smd_feat = ["l_CLI25", "l_CLI27", "l_CLI13", "l_CLI15", "l_CLI26", "l_CLI14",
             "l_CLI53", "l_CLI65", "l_SOL41", "l_CLI69", "l_TOP109", "l_CLI37"]
 smd_val = [0.161, 0.160, 0.160, 0.160, 0.160, 0.159, 0.155, 0.153, -0.150,
            0.146, -0.142, 0.140, 0.140, 0.137, -0.133, 0.131, 0.130, 0.128]
+# readable axis names (from the GeoFRESH variable dictionary) + the within-variable statistic
+smd_name = ["Temp. annual range", "Temp. annual range", "Temp. seasonality",
+            "Temp. seasonality", "Temp. annual range", "Temp. seasonality",
+            "Soil acidity", "Soil acidity", "Soil pH (H2O)", "Soil acidity",
+            "Soil pH (H2O)", "Distance to outlet", "Precip. driest month",
+            "Precip. driest quarter", "Soil pH (H2O)", "Precip. warmest quarter",
+            "Stream topology dim.", "Temp. warmest quarter"]
+smd_stat = ["min", "mean", "min", "mean", "max", "max", "mean", "min", "max",
+            "max", "mean", "min", "min", "min", "min", "min", "mean", "min"]
+smd_label = [f"{n}  ({s})" for n, s in zip(smd_name, smd_stat)]
 grp_color = {"l_CLI": TAB[0], "l_SOL": TAB[1], "l_TOP": TAB[2], "l_LAC": TAB[4]}
 bar_colors = [grp_color[f[:5]] for f in smd_feat]
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.4, 3.8), gridspec_kw={"width_ratios": [2.1, 1]})
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.6, 4.0), gridspec_kw={"width_ratios": [2.6, 1]})
 order = np.argsort(smd_val)
 ax1.barh(np.arange(len(smd_feat)), [smd_val[i] for i in order],
          color=[bar_colors[i] for i in order], edgecolor="white", linewidth=0.4)
-ax1.set_yticks(np.arange(len(smd_feat))); ax1.set_yticklabels([smd_feat[i] for i in order], fontsize=7)
+ax1.set_yticks(np.arange(len(smd_feat))); ax1.set_yticklabels([smd_label[i] for i in order], fontsize=6.6)
 ax1.axvline(0, color="#888", lw=0.6)
 ax1.set_xlabel("standardized mean difference  (all \u2192 high-accuracy)")
-ax1.set_title("Filtering shifts the niche\nalong climatic axes", fontsize=9.5)
+ax1.set_title("Filtering shifts the niche: high-accuracy records sit at\ngreater temperature range, further upstream", fontsize=8.6)
 handles = [plt.Rectangle((0, 0), 1, 1, color=c) for c in
            [grp_color["l_CLI"], grp_color["l_SOL"], grp_color["l_TOP"]]]
 ax1.legend(handles, ["climate", "soil", "topography"], frameon=False, fontsize=7.5, loc="lower right")
@@ -85,8 +95,9 @@ for i, v in enumerate(auc.values()):
 ax2.set_xticks(range(3)); ax2.set_xticklabels(list(auc.keys()), fontsize=7.3)
 ax2.set_ylim(0.5, 0.80); ax2.set_ylabel("propensity AUC (basin CV)")
 ax2.set_title("Quality is environmentally\nstructured beyond metadata", fontsize=9.5)
-ax2.text(0.5, 0.515, "energy-distance shift p = 0.005\nincremental env over metadata +0.075",
-         transform=ax2.transData, ha="center", fontsize=6.6, color="#444")
+ax2.annotate("energy-distance shift p = 0.005;  incremental env over metadata +0.075",
+             xy=(0.5, -0.22), xycoords="axes fraction", ha="center", va="top",
+             fontsize=6.6, color="#444")
 save(fig, "Fig2_crayfish_diagnostic")
 
 
@@ -100,6 +111,7 @@ sp_lab = ["A. astacus", "P. leptodactylus", "P. clarkii", "A. torrentium",
           "P. leniusculus", "F. limosus", "A. pallipes"]
 all_filter = [0.0469, 0.0367, 0.0338, 0.0333, 0.0332, 0.0322, 0.0296]
 filter_ipw = [0.0073, 0.0206, 0.0190, 0.0092, 0.0159, 0.0214, 0.0121]
+niche_breadth = [0.836, 1.548, 1.141, 0.861, 0.673, 0.716, 1.054]  # tested: does NOT track filter_ipw (r=-0.18)
 alien = [0.00, 0.55, 0.87, 0.00, 0.98, 0.95, 0.08]
 stat_color = [TAB[3] if a >= 0.5 else TAB[0] for a in alien]
 
@@ -110,16 +122,25 @@ axa.set_yticks(yy); axa.set_yticklabels(sp_lab, fontsize=7.3, style="italic")
 axa.set_xlabel("mean |\u0394 suitability|"); axa.set_xlim(0, 0.05)
 axa.set_title("Real cost of filtering (ALL \u2192 FILTER):\nmodest and status-blind", fontsize=9)
 
-# order panel b by filter_ipw to show the status sorting
+# panel b: sort by the sensitivity itself; colour by status, annotate niche breadth.
+# Tested three ways (variance, presence-background separability AUC, centroid Mahalanobis):
+# the sensitivity tracks NEITHER status NOR niche breadth -- it is a per-species property.
 ob = np.argsort(filter_ipw)
-axb.barh(np.arange(len(sp)), [filter_ipw[i] for i in ob],
+yb = np.arange(len(sp))
+axb.barh(yb, [filter_ipw[i] for i in ob],
          color=[stat_color[i] for i in ob], edgecolor="white", linewidth=0.4)
-axb.set_yticks(np.arange(len(sp))); axb.set_yticklabels([sp_lab[i] for i in ob], fontsize=7.3, style="italic")
-axb.set_xlabel("mean |\u0394 suitability|"); axb.set_xlim(0, 0.025)
-axb.set_title("IPW reweighting sensitivity (FILTER \u2192 IPW):\nstatus-sorted (a method property, not ecology)", fontsize=9)
+axb.set_yticks(yb); axb.set_yticklabels([sp_lab[i] for i in ob], fontsize=7.3, style="italic")
+axb.set_xlabel("mean |\u0394 suitability|"); axb.set_xlim(0, 0.028)
+# annotate each bar with that species' niche breadth, to show breadth does not order the bars
+for k, i in enumerate(ob):
+    axb.text(filter_ipw[i] + 0.0006, yb[k], f"breadth {niche_breadth[i]:.2f}",
+             va="center", ha="left", fontsize=6.2, color="0.45")
+axb.set_title("IPW reweighting sensitivity (FILTER \u2192 IPW):\n"
+              "varies by species, tracking neither status nor breadth", fontsize=9)
 
 h = [plt.Rectangle((0, 0), 1, 1, color=TAB[3]), plt.Rectangle((0, 0), 1, 1, color=TAB[0])]
 axa.legend(h, ["alien-dominated", "native-dominated"], frameon=False, fontsize=7.3, loc="lower right")
+axb.legend(h, ["alien-dominated", "native-dominated"], frameon=False, fontsize=7.0, loc="lower right")
 save(fig, "Fig3_consequence_divergence")
 
 print("figures written")

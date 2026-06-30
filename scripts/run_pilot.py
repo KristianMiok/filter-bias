@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
-from sdmgeo.synthetic import Manifold, contaminate_offmanifold, contaminate_onmanifold
-from sdmgeo.idtools import local_id_mle, id_vs_scale_decimation, knn_dist
+from filter_bias.synthetic import Manifold, contaminate_offmanifold, contaminate_onmanifold
+from filter_bias.idtools import local_id_mle, id_vs_scale_decimation, knn_dist
 
 D, D_AMBIENT, FRAC, K = 5, 20, 0.10, 50
 m = Manifold(d=D, D=D_AMBIENT, seed=1)
@@ -30,7 +30,7 @@ print(f"  local-ID AUC={roc_auc_score(mon, local_id_mle(Xon, K)):.3f}   "
       f"naive-dist AUC={roc_auc_score(mon, knn_dist(Xon, K)):.3f}   (both ~0.5 = blind)")
 
 # --- separating the two effects: shift (loc) vs concentration (scale) ---
-from sdmgeo.synthetic import contaminate_onmanifold_local
+from filter_bias.synthetic import contaminate_onmanifold_local
 
 print("\nTEST A - isolate SHIFT (scale fixed at 1.0, vary loc):")
 print("  loc    local-ID AUC   naive-dist AUC")

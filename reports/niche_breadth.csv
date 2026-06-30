@@ -1,0 +1,8 @@
+species,status,n_presence,niche_breadth,filter_ipw
+Pacifastacus leniusculus,Alien,6551,0.6728150846421085,0.0073
+Faxonius limosus,Alien,8176,0.7155307408741485,0.019
+Astacus astacus,Native,5548,0.8358710033189033,0.0206
+Austropotamobius torrentium,Native,3315,0.8612536423343744,0.0121
+Austropotamobius pallipes,Native,4741,1.0536375077986142,0.0214
+Procambarus clarkii,Alien,39725,1.1412251328454575,0.0159
+Pontastacus leptodactylus,Introduced,3033,1.5477485209737238,0.0092
