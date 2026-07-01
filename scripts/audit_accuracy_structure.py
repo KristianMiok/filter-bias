@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -11,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
 
-CSV = "/Users/kristianmiok/Desktop/Lucian/Global/Descriptive Paper/Data/combined_data_true_master.csv"
+CSV = os.environ.get("WOC_CSV", "data/crayfish_master.csv")
 RANDOM_STATE = 42
 
 

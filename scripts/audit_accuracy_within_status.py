@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -8,7 +9,7 @@ from sklearn.model_selection import train_test_split, GroupShuffleSplit
 from sklearn.pipeline import Pipeline
 
 
-CSV = "/Users/kristianmiok/Desktop/Lucian/Global/Descriptive Paper/Data/combined_data_true_master.csv"
+CSV = os.environ.get("WOC_CSV", "data/crayfish_master.csv")
 RANDOM_STATE = 42
 N_BASIN_SPLITS = 10
 

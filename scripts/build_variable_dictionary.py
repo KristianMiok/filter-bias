@@ -8,13 +8,14 @@ Hydrography90m meanings, units, and direction (which way high-quality records sh
 
 Output: reports/variable_dictionary_top_axes.csv -- the mapping table for Fig 2 and the
 ecological-interpretation paragraph (the `[describe the over-represented bioclim band]`
-marker in Lucian's Discussion).
+marker in the Discussion).
 """
 
+import os
 import pandas as pd
 from pathlib import Path
 
-DICT_XLSX = "/Users/kristianmiok/Desktop/Lucian/Global/Descriptive Paper/Data/var_climate_ver4.xlsx"
+DICT_XLSX = os.environ.get("WOC_DICT_XLSX", "data/var_climate.xlsx")
 PER_AXIS = "reports/qfbias_per_axis_shift.csv"     # crayfish diagnostic output
 TOP_N = 25
 OUT = "reports/variable_dictionary_top_axes.csv"

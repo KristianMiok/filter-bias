@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -8,7 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 
 
-CSV = "/Users/kristianmiok/Desktop/Lucian/Global/Descriptive Paper/Data/combined_data_true_master.csv"
+CSV = os.environ.get("WOC_CSV", "data/crayfish_master.csv")
 RANDOM_STATE = 42
 N_SPLITS = 5
 

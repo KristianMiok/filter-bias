@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -9,7 +10,7 @@ from sklearn.pipeline import Pipeline
 from scipy.stats import spearmanr
 
 
-CSV = "/Users/kristianmiok/Desktop/Lucian/Global/Descriptive Paper/Data/combined_data_true_master.csv"
+CSV = os.environ.get("WOC_CSV", "data/crayfish_master.csv")
 SCORES = "figures/accuracy_risk_scores_oof.csv"
 
 RANDOM_STATE = 42

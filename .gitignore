@@ -12,3 +12,9 @@ __pycache__/
 data/
 reports/odonata_de_annotated.csv
 *.zip
+__pycache__/
+*.pyc
+MEE_STRATEGY.md
+MEE_findings_and_plan.md
+*.anonbak
+*.bak

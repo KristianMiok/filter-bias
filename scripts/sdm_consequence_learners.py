@@ -3,7 +3,7 @@ sdm_consequence_learners.py
 ===========================
 Task 2 (learner sensitivity), realistic version.
 
-Lucian asked for Maxent + XGBoost "wired up from Robustness" -- but Maxent was not used
+Maxent + XGBoost were requested for a learner-sensitivity check -- but Maxent was not used
 for this paper, and this repo's make_model is RandomForest only. What is both feasible and
 on-point is XGBoost: gradient boosting reweights presence records far more aggressively than
 a tree-AVERAGING random forest, so it directly tests whether the "modest consequence" we see
