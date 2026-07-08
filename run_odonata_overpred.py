@@ -163,8 +163,9 @@ def main() -> None:
         m = np.array([report[f"L{L}"]["by_benchmark_band"][b]["cellmean_div"]["mean"] for L in LEVELS])
         lo = np.array([report[f"L{L}"]["by_benchmark_band"][b]["cellmean_div"]["lo2.5"] for L in LEVELS])
         hi = np.array([report[f"L{L}"]["by_benchmark_band"][b]["cellmean_div"]["hi97.5"] for L in LEVELS])
-        ax.errorbar(x, m, yerr=np.vstack([m - lo, hi - m]), marker="o", ms=4, lw=1.6,
-                    capsize=3, color=cmap(1.0 - mids.get(b, 0.5)), label=b)
+        ax.errorbar(x, m, yerr=np.vstack([m - lo, hi - m]), marker="o", ms=5, lw=1.8,
+                    capsize=3, color=cmap(1.0 - mids.get(b, 0.5)),
+                    markeredgecolor="0.4", markeredgewidth=0.6, label=b)
     ax.set_xticks(x); ax.set_xticklabels([f"L{L}\n({L}%)" for L in LEVELS])
     ax.set_xlabel("Low-accuracy contamination (% of training presences)")
     ax.set_ylabel("Over-prediction  (contaminated \u2212 clean benchmark)")
