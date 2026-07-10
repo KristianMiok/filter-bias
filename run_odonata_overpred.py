@@ -157,7 +157,7 @@ def main() -> None:
     cmap = matplotlib.colormaps["RdBu"]
     x = np.arange(len(LEVELS))
     plt.rcParams.update({"font.size": 11, "font.family": "sans-serif"})
-    fig, ax = plt.subplots(figsize=(6.4, 4.6))
+    fig, ax = plt.subplots(figsize=(6.8, 4.8), constrained_layout=True)
     ax.axhline(0, color="0.5", lw=0.9, ls="--")
     for b in [str(c) for c in cats]:
         m = np.array([report[f"L{L}"]["by_benchmark_band"][b]["cellmean_div"]["mean"] for L in LEVELS])
@@ -169,15 +169,14 @@ def main() -> None:
     ax.set_xticks(x); ax.set_xticklabels([f"L{L}\n({L}%)" for L in LEVELS])
     ax.set_xlabel("Low-accuracy contamination (% of training presences)")
     ax.set_ylabel("Over-prediction  (contaminated \u2212 clean benchmark)")
-    ax.set_title(f"Odonata cross-taxon check: directional miscalibration\n"
-                 f"{args.target}, German GBIF (30-replicate 2.5\u201397.5% intervals)", fontsize=10)
+    # no embedded title: the supplementary caption (Fig S3) carries the description
     ax.legend(frameon=False, fontsize=7.5, title="benchmark band", title_fontsize=8)
     ax.margins(x=0.15)
-    fig.tight_layout()
-    fig.savefig(FIGS / "fig_odonata_jae_dose_response.pdf", dpi=300, bbox_inches="tight")
-    fig.savefig(FIGS / "fig_odonata_jae_dose_response.png", dpi=150, bbox_inches="tight")
-    print(f"\nwrote {FIGS}/fig_odonata_jae_dose_response.pdf and "
-          f"{REPORTS}/odonata_overpred_band_ci.csv")
+    # constrained_layout (set at subplots) keeps the long y-axis label from clipping;
+    # do NOT add bbox_inches='tight' (conflicts and re-introduces clipping)
+    fig.savefig(FIGS / "FigS3.png", dpi=300)   # submission drop-in
+    fig.savefig(FIGS / "FigS3.pdf", dpi=300)
+    print(f"\nwrote {FIGS}/FigS3.png (300 dpi) and {REPORTS}/odonata_overpred_band_ci.csv")
 
 
 if __name__ == "__main__":
