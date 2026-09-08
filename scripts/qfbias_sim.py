@@ -30,6 +30,19 @@ reproducible for the old-vs-new comparison in the response to reviewers.
           their DISPLACED environment). "true" reproduces the old behaviour
           and is retained only as an oracle-covariate reference.
 
+  EXP 1 additions (Smith et al. 2023 comparator + uncertainty-aware propensity)
+    Both use the SAME extra information a practitioner has: the uncertainty
+    radius D around each low-quality record. They use it in opposite ways.
+      SMITH_env  : impute each low-quality record to the cell within radius D
+                   whose environment is CLOSEST to the environmental centroid of
+                   the high-quality records (Smith et al. 2023 GEB, method 2)
+      SMITH_geo  : same, but closest to the GEOGRAPHIC centroid (method 1)
+      ALL_calib  : all records, low-quality at the MEAN environment over the disk
+                   of radius D (regression calibration; Carroll et al.)
+      IPW_calib  : IPW with the propensity fitted on disk-mean environment for
+                   low-quality records (cfg.propensity_on="calib" makes IPW_est
+                   use this too)
+
   Extra diagnostics recorded per run (for R1 #5/#6 and R2 #7):
     diag_prop_coef_E1   : fitted propensity coefficient on E1 (sign flip /
                           attenuation under directed error is the mechanism
@@ -111,6 +124,7 @@ class SimConfig:
     error_mode: str = "blend"       # "blend" (normalised rho*v + (1-rho)*eps) | "mixture"
     # ---- FIX 2 ----
     propensity_on: str = "obs"      # "obs": practitioner (e_obs). "true": original (e_true)
+                                    # "calib": disk-mean env for low-quality (regression calibration)
     # SDM
     n_bg: int = 10000               # background points (quality-independent)
     weight_trim_pct: float = 99.0   # cap IPW weights at this percentile (stability)
@@ -224,6 +238,50 @@ def apply_coord_error(coords: np.ndarray, cfg: SimConfig,
     return np.clip(coords + delta, 0, cfg.grid - 1)
 
 
+def _disk_offsets(radius: float) -> np.ndarray:
+    """Integer (dr, dc) offsets of all cells within `radius` of the origin."""
+    R = int(np.ceil(radius))
+    dr, dc = np.mgrid[-R:R + 1, -R:R + 1]
+    m = (dr ** 2 + dc ** 2) <= radius ** 2
+    return np.stack([dr[m], dc[m]], axis=1)
+
+
+def _disk_cells(coords: np.ndarray, radius: float, grid: int) -> np.ndarray:
+    """(N, K, 2) integer cell indices of the disk around each coordinate, clipped."""
+    off = _disk_offsets(radius)
+    base = np.round(coords).astype(int)[:, None, :]
+    cells = base + off[None, :, :]
+    return np.clip(cells, 0, grid - 1)
+
+
+def disk_mean_env(coords: np.ndarray, radius: float, fieldlist: List[np.ndarray], grid: int) -> np.ndarray:
+    """Regression-calibration proxy: mean environment over the uncertainty disk."""
+    cells = _disk_cells(coords, radius, grid)
+    return np.stack([f[cells[:, :, 0], cells[:, :, 1]].mean(axis=1) for f in fieldlist], axis=1)
+
+
+def smith_impute_env(coords_lq: np.ndarray, radius: float, fieldlist: List[np.ndarray],
+                     grid: int, env_centroid: np.ndarray) -> np.ndarray:
+    """Smith et al. 2023, method 2: within the disk, take the cell whose environment
+    is closest (Euclidean) to the environmental centroid of the precise records."""
+    cells = _disk_cells(coords_lq, radius, grid)
+    env = np.stack([f[cells[:, :, 0], cells[:, :, 1]] for f in fieldlist], axis=2)   # (N, K, 2)
+    d2 = ((env - env_centroid[None, None, :]) ** 2).sum(axis=2)
+    j = np.argmin(d2, axis=1)
+    return env[np.arange(len(coords_lq)), j, :]
+
+
+def smith_impute_geo(coords_lq: np.ndarray, radius: float, fieldlist: List[np.ndarray],
+                     grid: int, geo_centroid: np.ndarray) -> np.ndarray:
+    """Smith et al. 2023, method 1: within the disk, take the cell closest to the
+    geographic centroid of the precise records."""
+    cells = _disk_cells(coords_lq, radius, grid)
+    d2 = ((cells - geo_centroid[None, None, :]) ** 2).sum(axis=2)
+    j = np.argmin(d2, axis=1)
+    pick = cells[np.arange(len(coords_lq)), j, :]
+    return np.stack([f[pick[:, 0], pick[:, 1]] for f in fieldlist], axis=1)
+
+
 def sample_background(cfg: SimConfig, rng) -> np.ndarray:
     """Quality-independent background = uniform over available environment."""
     return rng.uniform(0, cfg.grid - 1, size=(cfg.n_bg, 2))
@@ -321,21 +379,37 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
     hi = r == 1
     e_hi = e_obs[hi]          # == e_true[hi] by construction (high-quality keep true coords)
 
+    # ---- EXP 1: uncertainty-aware environment for low-quality records ----
+    # practitioner knows the uncertainty radius D (e.g. coordinateUncertaintyInMeters)
+    e_calib = e_obs.copy()
+    if low.any():
+        e_calib[low] = disk_mean_env(coords_obs[low], cfg.D, [E1, E2], cfg.grid)
+
     # ---- FIX 2: propensity fitted on what the practitioner can observe ----
     if cfg.propensity_on == "obs":
         e_prop = e_obs
     elif cfg.propensity_on == "true":
         e_prop = e_true       # ORIGINAL (oracle covariates) — reference only
+    elif cfg.propensity_on == "calib":
+        e_prop = e_calib
     else:
         raise ValueError(f"unknown propensity_on {cfg.propensity_on!r}")
 
-    prop = LogisticRegression(C=1e6, solver="lbfgs", max_iter=2000)
-    prop.fit(_design(e_prop), r)
-    p_hat_all = prop.predict_proba(_design(e_prop))[:, 1]
+    def fit_prop(e_):
+        m = LogisticRegression(C=1e6, solver="lbfgs", max_iter=2000)
+        m.fit(_design(e_), r)
+        return m, m.predict_proba(_design(e_))[:, 1]
+
+    prop, p_hat_all = fit_prop(e_prop)
     p_hat = p_hat_all[hi]
     prop_auc = float(roc_auc_score(r, p_hat_all)) if r.min() != r.max() else float("nan")
     prop_brier = float(brier_score_loss(r, p_hat_all))
     prop_coef_E1 = float(prop.coef_[0, 0])
+
+    # always also fit the calibrated propensity, for side-by-side comparison
+    prop_c, p_hat_all_c = fit_prop(e_calib)
+    p_hat_c = p_hat_all_c[hi]
+    prop_coef_E1_calib = float(prop_c.coef_[0, 0])
 
     def trim(w):
         cap = np.percentile(w, cfg.weight_trim_pct)
@@ -343,12 +417,26 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
 
     w_oracle = trim(1.0 / np.clip(p_q[hi], 1e-3, None))
     w_est = trim(1.0 / np.clip(p_hat, 1e-3, None))
+    w_calib = trim(1.0 / np.clip(p_hat_c, 1e-3, None))
+
+    # ---- EXP 1: Smith et al. 2023 imputation of low-quality records ----
+    e_smith_env = e_obs.copy()
+    e_smith_geo = e_obs.copy()
+    if low.any() and hi.any():
+        env_centroid = e_hi.mean(axis=0)
+        geo_centroid = coords_obs[hi].mean(axis=0)
+        e_smith_env[low] = smith_impute_env(coords_obs[low], cfg.D, [E1, E2], cfg.grid, env_centroid)
+        e_smith_geo[low] = smith_impute_geo(coords_obs[low], cfg.D, [E1, E2], cfg.grid, geo_centroid)
 
     surfaces = {
         "ALL":        predict_surface(fit_sdm(e_obs, e_bg), E1, E2),
         "FILTER":     predict_surface(fit_sdm(e_hi, e_bg), E1, E2),
         "IPW_oracle": predict_surface(fit_sdm(e_hi, e_bg, w_oracle), E1, E2),
         "IPW_est":    predict_surface(fit_sdm(e_hi, e_bg, w_est), E1, E2),
+        "IPW_calib":  predict_surface(fit_sdm(e_hi, e_bg, w_calib), E1, E2),
+        "ALL_calib":  predict_surface(fit_sdm(e_calib, e_bg), E1, E2),
+        "SMITH_env":  predict_surface(fit_sdm(e_smith_env, e_bg), E1, E2),
+        "SMITH_geo":  predict_surface(fit_sdm(e_smith_geo, e_bg), E1, E2),
     }
 
     out: Dict[str, float] = {
@@ -370,6 +458,8 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
     out["diag_propensity_auc"] = prop_auc
     out["diag_prop_brier"] = prop_brier
     out["diag_prop_coef_E1"] = prop_coef_E1
+    out["diag_prop_coef_E1_calib"] = prop_coef_E1_calib
+    out.update({f"diag_{k}_calib": v for k, v in overlap_diagnostics(p_hat_c).items()})
     out["diag_lowq_dE1_shift"] = float(np.mean(e_obs[low, 0] - e_true[low, 0])) if low.any() else 0.0
     out["diag_realised_disp"] = float(np.mean(np.linalg.norm(coords_obs[low] - coords[low], axis=1))) if low.any() else 0.0
     return out
