@@ -1,0 +1,46 @@
+================================================================================================
+EXPERIMENT 0b — ERROR ALIGNMENT   (honest build; |delta| = D for all geometries)
+================================================================================================
+
+At rho = 1 (fully directed), by geometry.  coef = fitted propensity coefficient on E1;
+dE1 = mean E1 shift of low-quality records (obs - true); gap = IPW_est - FILTER.
+
+  beta  geometry     coef(E1)   dE1     ALL    FILTER  IPW_est  IPW_orc   gap    winner
+   0.0  toward_HQ     -2.12   +0.64  0.857  0.999   0.922   0.999  -0.077  FILTER
+   0.0  away_HQ       +1.68   -0.63  0.864  0.999   0.931   0.999  -0.068  FILTER
+   0.0  geo_fixed     -0.04   +0.02  0.995  0.999   0.996   0.999  -0.003  TIE
+   0.0  mixture_HQ    -2.12   +0.64  0.856  0.999   0.922   0.999  -0.077  FILTER
+
+   1.0  toward_HQ     -0.77   +0.69  0.861  0.955   0.883   0.998  -0.072  FILTER
+   1.0  away_HQ       +3.52   -0.59  0.837  0.955   0.991   0.998  +0.037  IPW
+   1.0  geo_fixed     +1.25   +0.05  0.996  0.955   0.987   0.998  +0.032  ALL
+   1.0  mixture_HQ    -0.77   +0.69  0.860  0.955   0.883   0.998  -0.072  FILTER
+
+   2.0  toward_HQ     -0.01   +0.70  0.843  0.900   0.860   0.991  -0.041  FILTER
+   2.0  away_HQ       +5.27   -0.58  0.821  0.900   0.984   0.991  +0.084  IPW
+   2.0  geo_fixed     +2.23   +0.07  0.996  0.900   0.957   0.991  +0.056  ALL
+   2.0  mixture_HQ    -0.01   +0.70  0.841  0.900   0.859   0.991  -0.041  FILTER
+
+   3.0  toward_HQ     +0.51   +0.71  0.826  0.864   0.838   0.970  -0.026  FILTER
+   3.0  away_HQ       +6.96   -0.58  0.813  0.864   0.935   0.970  +0.071  IPW
+   3.0  geo_fixed     +3.01   +0.08  0.995  0.864   0.918   0.970  +0.054  ALL
+   3.0  mixture_HQ    +0.51   +0.71  0.828  0.866   0.840   0.971  -0.026  FILTER
+
+   4.0  toward_HQ     +0.86   +0.71  0.821  0.846   0.827   0.954  -0.020  FILTER
+   4.0  away_HQ       +8.35   -0.57  0.808  0.846   0.901   0.954  +0.055  IPW
+   4.0  geo_fixed     +3.61   +0.08  0.995  0.846   0.897   0.954  +0.050  ALL
+   4.0  mixture_HQ    +0.86   +0.71  0.823  0.848   0.828   0.953  -0.019  FILTER
+
+Reading:
+  toward_HQ : coef attenuated / sign-flipped -> IPW under-corrects, can lose to FILTER
+  away_HQ   : coef exaggerated -> IPW over-corrects but stays near oracle; ALL collapses
+  geo_fixed : coef ~ unbiased (dE1 ~ 0) -> everything behaves as at rho = 0
+  mixture_HQ: same as toward_HQ -> result does not depend on the blend definition
+
+rho = 0 reference (all geometries identical by construction):
+  beta   coef(E1)   ALL    FILTER  IPW_est  IPW_orc
+   0.0    -0.04   0.999  0.999   0.999   0.999
+   1.0    +1.23   0.998  0.955   0.989   0.998
+   2.0    +2.23   0.997  0.900   0.956   0.991
+   3.0    +3.04   0.997  0.864   0.916   0.970
+   4.0    +3.57   0.997  0.846   0.891   0.954

@@ -103,7 +103,9 @@ class SimConfig:
     rho: float = 0.0                # Knob 2: directedness (0 = isotropic, 1 = systematic)
     D: float = 12.0                 # error magnitude (grid cells)
     error_dir: Tuple[float, float] = (0.0, 1.0)   # fixed geographic pull (row, col)
-    error_follow_gradient: bool = True            # snap UP the E1 (accessibility) gradient
+    error_follow_gradient: bool = True            # snap along the E1 (accessibility) gradient
+    error_gradient_sign: float = +1.0             # +1: toward high E1 (where high-quality sit)
+                                                  # -1: toward low E1 (away from them)
     # ---- FIX 1 ----
     fixed_magnitude: bool = True    # True: |delta| == D for all rho. False: original (buggy)
     error_mode: str = "blend"       # "blend" (normalised rho*v + (1-rho)*eps) | "mixture"
@@ -196,7 +198,7 @@ def apply_coord_error(coords: np.ndarray, cfg: SimConfig,
         gE1_r, gE1_c = grad
         gv = _env_at(coords, [gE1_r, gE1_c], cfg.grid)
         norm = np.linalg.norm(gv, axis=1, keepdims=True) + 1e-12
-        v = gv / norm
+        v = cfg.error_gradient_sign * gv / norm
     else:
         v = np.broadcast_to(np.array(cfg.error_dir, float), (n, 2))
         v = v / (np.linalg.norm(cfg.error_dir) + 1e-12)
