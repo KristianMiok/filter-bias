@@ -1,0 +1,112 @@
+==============================================================================
+EXPERIMENT 0 — GATE VERDICT   (build D_both = honest build)
+==============================================================================
+
+Q1  Does IPW_est still beat FILTER wherever coupling is present (beta > 0)?
+    cells with beta>0: 35   IPW wins: 17   ties: 2   FILTER wins: 16
+    IPW_est - FILTER gap:  min -0.0857   median +0.0049   max +0.0558
+    (same gap in ORIGINAL build:  min +0.0126   median +0.0899   max +0.1062)
+    by rho (mean gap over beta>0):
+      rho=0.00   fixed +0.0427   original +0.0757
+      rho=0.25   fixed +0.0353   original +0.0757
+      rho=0.50   fixed +0.0068   original +0.0757
+      rho=0.75   fixed -0.0421   original +0.0757
+      rho=1.00   fixed -0.0470   original +0.0757
+    --> Q1: PARTLY
+
+Q2  Does the positivity ceiling still appear?  (IPW recovery falls with beta at rho=0; ESS falls)
+    beta   IPW_oracle   IPW_est   ESS_frac(est)   prop_AUC   prop_coef_E1
+     0.0   0.9991     0.9990    0.807          0.642      -0.04
+     0.5   0.9990     0.9967    0.711          0.660      +0.62
+     1.0   0.9984     0.9890    0.634          0.713      +1.23
+     1.5   0.9961     0.9748    0.559          0.753      +1.77
+     2.0   0.9912     0.9563    0.484          0.784      +2.23
+     2.5   0.9834     0.9344    0.460          0.802      +2.62
+     3.0   0.9702     0.9157    0.375          0.817      +3.04
+     4.0   0.9536     0.8912    0.507          0.832      +3.57
+    --> Q2: YES (oracle IPW at beta=4 vs beta=0: 0.9536 vs 0.9991)
+
+Q3  Does the FILTER-to-IPW spread stay narrow?  (Schoener D between the two surfaces)
+    Also: how far is practitioner IPW from ORACLE IPW (the cost of not knowing e_true)?
+    beta   D(IPWest,FILTER)  D(IPWest,IPWoracle)   [original: D(IPWest,IPWoracle)]
+     0.0      0.877             0.877                   0.989
+     0.5      0.906             0.869                   0.991
+     1.0      0.915             0.862                   0.989
+     1.5      0.916             0.858                   0.988
+     2.0      0.916             0.860                   0.987
+     2.5      0.919             0.862                   0.988
+     3.0      0.919             0.870                   0.988
+     4.0      0.925             0.875                   0.988
+    --> Q3: see table; narrow spread now partly reflects IPW_est collapsing TOWARD FILTER,
+        not the two corrections agreeing on the truth. Check D(IPWest,IPWoracle) at high rho.
+
+Q4  Does IPW_est now depend on rho?  (range of IPW_est over rho, at each beta)
+    beta   original(range)   fixed(range)   fixed: IPW_est at rho=0 -> rho=1
+     0.0     0.0000          0.0766         0.9990 -> 0.9224
+     0.5     0.0000          0.0957         0.9967 -> 0.9010
+     1.0     0.0000          0.1060         0.9890 -> 0.8830
+     1.5     0.0000          0.1037         0.9748 -> 0.8711
+     2.0     0.0000          0.0965         0.9563 -> 0.8598
+     2.5     0.0000          0.0841         0.9344 -> 0.8503
+     3.0     0.0000          0.0773         0.9157 -> 0.8383
+     4.0     0.0000          0.0646         0.8912 -> 0.8267
+    --> Q4: in the original build the range is ~0 by construction (bug 2).
+
+MECHANISM  propensity coefficient on E1 (true generative beta on the standardised axis):
+    beta   rho=0.00   rho=0.25   rho=0.50   rho=0.75   rho=1.00      [original, any rho]
+     0.0     -0.04     -0.26     -1.34     -2.09     -2.12          -0.04
+     0.5     +0.62     +0.38     -0.60     -1.34     -1.36          +0.90
+     1.0     +1.23     +0.98     +0.08     -0.74     -0.77          +1.86
+     1.5     +1.77     +1.49     +0.59     -0.31     -0.35          +2.75
+     2.0     +2.23     +1.92     +0.98     +0.01     -0.01          +3.65
+     2.5     +2.62     +2.32     +1.39     +0.32     +0.27          +4.57
+     3.0     +3.04     +2.67     +1.75     +0.57     +0.51          +5.53
+     4.0     +3.57     +3.18     +2.26     +0.93     +0.86          +7.29
+    Attenuation toward 0 (or sign flip) = displaced records pulling the estimated
+    retention gradient flat. This is the non-identifiability, made visible.
+
+BEST STRATEGY MAP  (TIE = margin < 0.005 Spearman)
+
+  build A_orig:
+    beta \ rho      0.00     0.25     0.50     0.75     1.00
+       4.0           ALL      ALL      TIE  IPW_est  IPW_est
+       3.0           ALL      ALL  IPW_est  IPW_est  IPW_est
+       2.5           ALL      ALL  IPW_est  IPW_est  IPW_est
+       2.0           ALL      TIE  IPW_est  IPW_est  IPW_est
+       1.5           TIE  IPW_est  IPW_est  IPW_est  IPW_est
+       1.0           TIE  IPW_est  IPW_est  IPW_est  IPW_est
+       0.5           TIE  IPW_est  IPW_est  IPW_est  IPW_est
+       0.0           TIE      TIE      TIE      TIE      TIE
+
+  build B_magfix:
+    beta \ rho      0.00     0.25     0.50     0.75     1.00
+       4.0           ALL      ALL  IPW_est  IPW_est  IPW_est
+       3.0           ALL      ALL  IPW_est  IPW_est  IPW_est
+       2.5           ALL      ALL  IPW_est  IPW_est  IPW_est
+       2.0           ALL      TIE  IPW_est  IPW_est  IPW_est
+       1.5           TIE      TIE  IPW_est  IPW_est  IPW_est
+       1.0           TIE      TIE  IPW_est  IPW_est  IPW_est
+       0.5           TIE      TIE  IPW_est  IPW_est  IPW_est
+       0.0           TIE      TIE      TIE      TIE      TIE
+
+  build C_propfix:
+    beta \ rho      0.00     0.25     0.50     0.75     1.00
+       4.0           ALL      ALL      ALL      ALL   FILTER
+       3.0           ALL      ALL      ALL      ALL   FILTER
+       2.5           ALL      ALL      ALL      TIE   FILTER
+       2.0           ALL      ALL      ALL      TIE   FILTER
+       1.5           ALL      ALL      TIE   FILTER   FILTER
+       1.0           ALL      ALL      TIE   FILTER   FILTER
+       0.5           TIE      TIE   FILTER   FILTER   FILTER
+       0.0           TIE      TIE   FILTER   FILTER   FILTER
+
+  build D_both:
+    beta \ rho      0.00     0.25     0.50     0.75     1.00
+       4.0           ALL      ALL      ALL   FILTER   FILTER
+       3.0           ALL      ALL      ALL   FILTER   FILTER
+       2.5           ALL      ALL      TIE   FILTER   FILTER
+       2.0           ALL      ALL  IPW_est   FILTER   FILTER
+       1.5           ALL      ALL      TIE   FILTER   FILTER
+       1.0           ALL      ALL   FILTER   FILTER   FILTER
+       0.5           TIE      TIE   FILTER   FILTER   FILTER
+       0.0           TIE      TIE   FILTER   FILTER   FILTER
