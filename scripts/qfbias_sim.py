@@ -125,6 +125,12 @@ class SimConfig:
     # ---- FIX 2 ----
     propensity_on: str = "obs"      # "obs": practitioner (e_obs). "true": original (e_true)
                                     # "calib": disk-mean env for low-quality (regression calibration)
+    # ---- EXP 2: analytical grain ----
+    grain: int = 1                  # block-average the env layers the modeller reads, by this
+                                    # factor. Truth stays at the fine scale. grain > 1 raises the
+                                    # effective field autocorrelation at lag D.
+    # ---- EXP 4: kappa-envelope (sensitivity to multiplicative propensity corruption) ----
+    kappa_grid: Tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 4.0)   # Lambda = 4
     # SDM
     n_bg: int = 10000               # background points (quality-independent)
     weight_trim_pct: float = 99.0   # cap IPW weights at this percentile (stability)
@@ -282,6 +288,53 @@ def smith_impute_geo(coords_lq: np.ndarray, radius: float, fieldlist: List[np.nd
     return np.stack([f[pick[:, 0], pick[:, 1]] for f in fieldlist], axis=1)
 
 
+def coarsen(field: np.ndarray, grain: int) -> np.ndarray:
+    """Block-average by `grain`, then upsample back: the modeller reads a field that is
+    piecewise-constant on grain x grain blocks. Truth is unaffected."""
+    if grain <= 1:
+        return field
+    g, n = grain, field.shape[0]
+    m = (n // g) * g
+    blocks = field[:m, :m].reshape(m // g, g, m // g, g).mean(axis=(1, 3))
+    up = np.repeat(np.repeat(blocks, g, axis=0), g, axis=1)
+    out = field.copy()
+    out[:m, :m] = up
+    return out
+
+
+def field_autocorr(field: np.ndarray, lag: float, rng, n_pairs: int = 40000) -> float:
+    """Empirical correlation between field values separated by `lag` in a random direction.
+    This is exactly the quantity the displacement operator sees."""
+    n = field.shape[0]
+    p = rng.uniform(0, n - 1, size=(n_pairs, 2))
+    ang = rng.uniform(0, 2 * np.pi, size=n_pairs)
+    q = p + lag * np.stack([np.cos(ang), np.sin(ang)], axis=1)
+    keep = np.all((q >= 0) & (q <= n - 1), axis=1)
+    p, q = p[keep], q[keep]
+    a = field[np.round(p[:, 0]).astype(int), np.round(p[:, 1]).astype(int)]
+    b = field[np.round(q[:, 0]).astype(int), np.round(q[:, 1]).astype(int)]
+    return float(np.corrcoef(a, b)[0, 1])
+
+
+def rescale_propensity(p_hat_all: np.ndarray, kappa: float, target_rate: float) -> np.ndarray:
+    """Multiply the centred logit of an estimated propensity by kappa and recalibrate the
+    intercept so the marginal retention rate is preserved. kappa < 1 = attenuated
+    propensity, kappa > 1 = exaggerated. This is a one-parameter marginal sensitivity
+    model whose parameter is the coefficient-corruption factor."""
+    z = np.log(np.clip(p_hat_all, 1e-6, 1 - 1e-6) / np.clip(1 - p_hat_all, 1e-6, None))
+    zc = kappa * (z - z.mean())
+    lo, hi = -50.0, 50.0
+    for _ in range(80):
+        mid = 0.5 * (lo + hi)
+        m = 1.0 / (1.0 + np.exp(-(mid + zc)))
+        if m.mean() < target_rate:
+            lo = mid
+        else:
+            hi = mid
+    a = 0.5 * (lo + hi)
+    return 1.0 / (1.0 + np.exp(-(a + zc)))
+
+
 def sample_background(cfg: SimConfig, rng) -> np.ndarray:
     """Quality-independent background = uniform over available environment."""
     return rng.uniform(0, cfg.grid - 1, size=(cfg.n_bg, 2))
@@ -358,10 +411,14 @@ def overlap_diagnostics(p_hat_hi: np.ndarray) -> Dict[str, float]:
 # --------------------------------------------------------------------------- #
 def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
     rng = np.random.default_rng(seed)
-    E1, E2, gE1_r, gE1_c = make_env_field(cfg)
-    S = true_suitability(E1, E2, cfg)
+    E1f, E2f, gE1_r, gE1_c = make_env_field(cfg)
+    S = true_suitability(E1f, E2f, cfg)          # truth always at the fine scale
 
-    # true occurrences
+    # EXP 2: the modeller reads the environment at the analysis grain
+    E1 = coarsen(E1f, cfg.grain)
+    E2 = coarsen(E2f, cfg.grain)
+
+    # true occurrences (drawn from fine-scale truth)
     coords = sample_true_occurrences(S, cfg, rng)
     e_true = _env_at(coords, [E1, E2], cfg.grid)
 
@@ -411,6 +468,10 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
     p_hat_c = p_hat_all_c[hi]
     prop_coef_E1_calib = float(prop_c.coef_[0, 0])
 
+    # oracle-covariate propensity: reference for the attenuation formula
+    prop_t, _ = fit_prop(e_true)
+    prop_coef_E1_true = float(prop_t.coef_[0, 0])
+
     def trim(w):
         cap = np.percentile(w, cfg.weight_trim_pct)
         return np.clip(w, None, cap)
@@ -427,6 +488,13 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
         geo_centroid = coords_obs[hi].mean(axis=0)
         e_smith_env[low] = smith_impute_env(coords_obs[low], cfg.D, [E1, E2], cfg.grid, env_centroid)
         e_smith_geo[low] = smith_impute_geo(coords_obs[low], cfg.D, [E1, E2], cfg.grid, geo_centroid)
+
+    # ---- EXP 4: kappa-envelope around the practitioner's propensity ----
+    kappa_surfaces = {}
+    for kap in cfg.kappa_grid:
+        p_k = rescale_propensity(p_hat_all, kap, float(hi.mean()))
+        w_k = trim(1.0 / np.clip(p_k[hi], 1e-3, None))
+        kappa_surfaces[kap] = predict_surface(fit_sdm(e_hi, e_bg, w_k), E1, E2)
 
     surfaces = {
         "ALL":        predict_surface(fit_sdm(e_obs, e_bg), E1, E2),
@@ -459,6 +527,38 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
     out["diag_prop_brier"] = prop_brier
     out["diag_prop_coef_E1"] = prop_coef_E1
     out["diag_prop_coef_E1_calib"] = prop_coef_E1_calib
+    out["diag_prop_coef_E1_true"] = prop_coef_E1_true
+    # attenuation-formula ingredients (true class separation on E1, mean displacement on E1)
+    out["diag_true_sep_E1"] = float(e_true[hi, 0].mean() - e_true[low, 0].mean()) if low.any() else float("nan")
+    out["diag_obs_sep_E1"] = float(e_obs[hi, 0].mean() - e_obs[low, 0].mean()) if low.any() else float("nan")
+    # pooled within-class variance on E1, true vs observed (reliability ratio for the formula)
+    pi1 = float(hi.mean())
+    pv_true = pi1 * e_true[hi, 0].var() + (1 - pi1) * e_true[low, 0].var() if low.any() else float("nan")
+    pv_obs = pi1 * e_obs[hi, 0].var() + (1 - pi1) * e_obs[low, 0].var() if low.any() else float("nan")
+    out["diag_pooled_var_E1_true"] = float(pv_true)
+    out["diag_pooled_var_E1_obs"] = float(pv_obs)
+    # ---- EXP 2: field autocorrelation at the displacement lag, and its predictions ----
+    rho_D = field_autocorr(E1, cfg.D, np.random.default_rng(10_000 + seed))
+    out["diag_rho_D"] = rho_D
+    out["diag_grain"] = cfg.grain
+    out["diag_corr_len"] = cfg.corr_len
+    if low.any():
+        m0 = float(e_true[low, 0].mean())
+        v1 = float(e_true[hi, 0].var()); v0 = float(e_true[low, 0].var())
+        out["pred_mu_delta"] = (rho_D - 1.0) * m0
+        out["pred_pooled_var_obs"] = pi1 * v1 + (1 - pi1) * (rho_D ** 2 * v0 + (1 - rho_D ** 2))
+        out["pred_reliability"] = float(pv_true) / out["pred_pooled_var_obs"]
+    else:
+        out["pred_mu_delta"] = float("nan")
+        out["pred_pooled_var_obs"] = float("nan")
+        out["pred_reliability"] = float("nan")
+    # kappa envelope
+    for kap, surf in kappa_surfaces.items():
+        out[f"rho_sp_IPW_k{kap:g}"] = spearman_surface(surf, S)
+    ks = list(kappa_surfaces.keys())
+    out["env_width_D"] = schoener_d(kappa_surfaces[min(ks)], kappa_surfaces[max(ks)])
+    out["env_best_rec"] = max(spearman_surface(kappa_surfaces[k], S) for k in ks)
+    out["env_best_kappa"] = float(max(ks, key=lambda k: spearman_surface(kappa_surfaces[k], S)))
     out.update({f"diag_{k}_calib": v for k, v in overlap_diagnostics(p_hat_c).items()})
     out["diag_lowq_dE1_shift"] = float(np.mean(e_obs[low, 0] - e_true[low, 0])) if low.any() else 0.0
     out["diag_realised_disp"] = float(np.mean(np.linalg.norm(coords_obs[low] - coords[low], axis=1))) if low.any() else 0.0
