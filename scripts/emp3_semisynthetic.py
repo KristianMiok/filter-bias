@@ -72,6 +72,7 @@ BETA = 2.5
 RETAIN_FALLBACK = 0.60
 D_KMS = (2.0, 10.0, 25.0)
 REGIMES = ("iso", "toward_HQ", "away_HQ")
+AXES_ORDER = ("long_range", "short_range")
 SEEDS = (0, 1, 2)
 N_BACKGROUND, SEED0 = 20000, 42
 N_TREES = int(os.environ.get("EMP3_TREES", "300"))
@@ -145,13 +146,17 @@ def main():
     d = d[d[lc].notna().all(axis=1) & d.lat_or.notna() & d.long_or.notna()].reset_index(drop=True)
     lc = [c for c in lc if d[c].nunique() > 1]
 
-    # real leading coupling axis: largest |SMD| High vs Low over the full database
+    # coupling axes: overall leading (long-range, climatic) and leading TOPOGRAPHIC
+    # (short-range) High-vs-Low SMD axis — the axis correlation length is the moderator
     rq = d.Accuracy.eq("High").astype(int).values
     Z_all = StandardScaler().fit_transform(d[lc].values)
     smd = (Z_all[rq == 1].mean(0) - Z_all[rq == 0].mean(0))
-    j_lead = int(np.argmax(np.abs(smd)))
-    lead_var, lead_sign = lc[j_lead], np.sign(smd[j_lead])
-    print(f"leading coupling axis: {lead_var}  (High-vs-Low SMD {smd[j_lead]:+.3f})")
+    j_long = int(np.argmax(np.abs(smd)))
+    top_idx = [i for i, c in enumerate(lc) if c.startswith("l_TOP")]
+    j_short = top_idx[int(np.argmax(np.abs(smd[np.array(top_idx)])))]
+    AXES = {"long_range": j_long, "short_range": j_short}
+    for a, j in AXES.items():
+        print(f"coupling axis [{a}]: {lc[j]}  (High-vs-Low SMD {smd[j]:+.3f})")
 
     # truth set = High records of the focal species
     tr_mask = d.Crayfish_scientific_name.eq(FOCAL_SP) & d.Accuracy.eq("High")
@@ -164,9 +169,13 @@ def main():
     tree = cKDTree(XY_all)
     XY_tr = project_xy(truth.lat_or.values, truth.long_or.values)
 
-    u_all = lead_sign * Z_all[:, j_lead]
-    u_tr = lead_sign * (truth[lead_var].values.astype(float) - d[lead_var].mean()) / (d[lead_var].std() + 1e-12)
-    u_tr_std = (u_tr - u_tr.mean()) / (u_tr.std() + 1e-12)
+    U_ALL, U_TR, U_TR_STD = {}, {}, {}
+    for a, j in AXES.items():
+        sgn = np.sign(smd[j])
+        U_ALL[a] = sgn * Z_all[:, j]
+        ut = sgn * (truth[lc[j]].values.astype(float) - d[lc[j]].mean()) / (d[lc[j]].std() + 1e-12)
+        U_TR[a] = ut
+        U_TR_STD[a] = (ut - ut.mean()) / (ut.std() + 1e-12)
 
     # background: other species
     bg = d[~d.Crayfish_scientific_name.eq(FOCAL_SP)]
@@ -182,15 +191,24 @@ def main():
         m.fit(X, y, rf__sample_weight=sw)
         return m.predict_proba(Xb)[:, 1]
 
-    print("fitting truth reference ...")
+    print("fitting truth reference + ceilings ...")
     ref = fit_predict(truth[lc].values)
+    ref2 = fit_predict(truth[lc].values, seed=SEED0 + 777)
+    ceil_seed = float(spearmanr(ref2, ref).statistic)
+    rng0 = np.random.default_rng(7)
+    sub = rng0.choice(len(truth), size=int(retain * len(truth)), replace=False)
+    mcar = fit_predict(truth[lc].values[sub], seed=SEED0 + 778)
+    ceil_mcar = float(spearmanr(mcar, ref).statistic)
+    print(f"ceilings: seed-refit {ceil_seed:.3f}   MCAR-{retain:.0%} deletion {ceil_mcar:.3f}")
 
     Zc_sc = StandardScaler().fit(d[lc].values)
     rows, lines = [], []
     for D_km in D_KMS:
         pools = [np.asarray(pl) for pl in tree.query_ball_point(XY_tr, r=D_km)]
-        for regime in REGIMES:
+        for axis_name in AXES_ORDER:
+          for regime in REGIMES:
             for seed in SEEDS:
+                u_all = U_ALL[axis_name]; u_tr_std = U_TR_STD[axis_name]; u_tr_z = U_TR[axis_name]
                 t0 = time.time()
                 rng = np.random.default_rng(1000 * seed + int(D_km))
                 alpha = calibrate_alpha(u_tr_std, BETA, retain)
@@ -201,6 +219,7 @@ def main():
                 e_obs = truth[lc].values.copy()
                 donor_basin = truth.basin_id.values.copy()
                 n_disp = 0
+                du_rec, du_don = [], []
                 for i in np.where(~hi)[0]:
                     pool = pools[i]
                     if len(pool) < 2:
@@ -214,6 +233,7 @@ def main():
                     e_obs[i] = d[lc].values[jj]
                     donor_basin[i] = d.basin_id.values[jj]
                     n_disp += 1
+                    du_rec.append(float(u_tr_z[i])); du_don.append(float(u_all[jj]))
 
                 Xd = pca_design(e_obs)
                 p_oof = oof_propensity(Xd, r, donor_basin)
@@ -243,15 +263,20 @@ def main():
                     "SMITH_env": fit_predict(e_smith, seed=SEED0 + seed),
                     "ALL_calib": fit_predict(e_calib, seed=SEED0 + seed),
                 }
-                row = dict(regime=regime, D_km=D_km, seed=seed, n_truth=len(truth),
-                           n_high=int(hi.sum()), n_displaced=n_disp,
+                mu_u = float(np.mean(np.array(du_don) - np.array(du_rec))) if du_rec else 0.0
+                rho_u = float(np.corrcoef(du_rec, du_don)[0, 1]) if len(du_rec) > 5 else float("nan")
+                row = dict(axis=axis_name, regime=regime, D_km=D_km, seed=seed,
+                           n_truth=len(truth), n_high=int(hi.sum()), n_displaced=n_disp,
+                           mu_u=mu_u, rho_u=rho_u,
+                           ceil_seed=ceil_seed, ceil_mcar=ceil_mcar,
                            auc=auc, brier=brier, ess=ess)
                 for k, s in surfaces.items():
                     row[f"sp_{k}"] = float(spearmanr(s, ref).statistic)
                     row[f"D_{k}"] = schoener_d(s, ref)
                 rows.append(row)
                 best = max(surfaces, key=lambda k: row[f"sp_{k}"])
-                lines.append(f"  {regime:10s} D={D_km:4.0f}km seed={seed}  AUC={auc:.3f} Brier={brier:.3f} "
+                lines.append(f"  {axis_name[:5]:5s} {regime:10s} D={D_km:4.0f}km seed={seed}  "
+                             f"mu_u={mu_u:+.2f} rho_u={rho_u:.2f}  AUC={auc:.3f} Brier={brier:.3f} "
                              f"ESS={ess:.3f}  " +
                              " ".join(f"{k}={row[f'sp_{k}']:.3f}" for k in surfaces) +
                              f"  best={best}  [{time.time()-t0:.0f}s]")
@@ -259,7 +284,7 @@ def main():
 
     raw = pd.DataFrame(rows)
     raw.to_csv(os.path.join(REPORTS, "emp3_semisynth_sweep.csv"), index=False)
-    sm = raw.groupby(["regime", "D_km"]).mean(numeric_only=True).reset_index()
+    sm = raw.groupby(["axis", "regime", "D_km"]).mean(numeric_only=True).reset_index()
     sm.to_csv(os.path.join(REPORTS, "emp3_semisynth_summary.csv"), index=False)
 
     out = ["=" * 116,
