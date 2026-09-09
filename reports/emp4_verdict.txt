@@ -1,0 +1,20 @@
+================================================================================================================
+EMP 4 — ODONATA: unified propensity, per-record-radius SMITH/calib, threshold sweep, variogram
+================================================================================================================
+records without usable uncertainty (set aside): 7561
+bio-space autocorrelation varrho(h):
+    h<=  0.5 km   corr=0.999   (n_pairs=7921)
+    h<=  1.0 km   corr=0.999   (n_pairs=1368)
+    h<=  2.0 km   corr=0.996   (n_pairs=2318)
+    h<=  5.0 km   corr=0.986   (n_pairs=9133)
+    h<= 10.0 km   corr=0.959   (n_pairs=20549)
+    h<= 25.0 km   corr=0.883   (n_pairs=93120)
+    h<= 50.0 km   corr=0.713   (n_pairs=200000)
+  Calopteryx splendens       n= 2280 AUC=0.680 ESS=0.821 gated=no  bal 0.106->0.028  poolcov=0.16  D(A,F)=0.819 D(F,I)=0.917 D(A,S)=0.964  L2=0.913  [8s]
+  Coenagrion puella          n= 4126 AUC=0.673 ESS=0.887 gated=no  bal 0.069->0.010  poolcov=0.20  D(A,F)=0.847 D(F,I)=0.925 D(A,S)=0.975  L2=0.948  [8s]
+  Ischnura elegans           n= 3252 AUC=0.645 ESS=0.814 gated=no  bal 0.088->0.059  poolcov=0.19  D(A,F)=0.821 D(F,I)=0.909 D(A,S)=0.974  L2=0.940  [8s]
+  Libellula depressa         n= 2148 AUC=0.657 ESS=0.821 gated=no  bal 0.081->0.027  poolcov=0.17  D(A,F)=0.825 D(F,I)=0.900 D(A,S)=0.966  L2=0.897  [8s]
+  Libellula quadrimaculata   n= 2496 AUC=0.672 ESS=0.830 gated=no  bal 0.076->0.033  poolcov=0.17  D(A,F)=0.793 D(F,I)=0.915 D(A,S)=0.975  L2=0.921  [8s]
+  Pyrrhosoma nymphula        n= 5128 AUC=0.632 ESS=0.940 gated=no  bal 0.069->0.015  poolcov=0.23  D(A,F)=0.875 D(F,I)=0.946 D(A,S)=0.973  L2=0.910  [9s]
+
+threshold sweep -> emp4_threshold_sweep.csv
