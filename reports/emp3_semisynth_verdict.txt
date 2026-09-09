@@ -1,0 +1,32 @@
+====================================================================================================================
+EMP 3 — SEMI-SYNTHETIC GROUND TRUTH ON REAL DATA  (Astacus astacus, beta=2.5, axis by largest real SMD)
+====================================================================================================================
+  iso        D=   2km seed=0  AUC=0.784 Brier=0.182 ESS=0.649  ALL=0.879 FILTER=0.717 IPW_est=0.694 IPW_oracle=0.701 SMITH_env=0.883 ALL_calib=0.883  best=ALL_calib  [16s]
+  iso        D=   2km seed=1  AUC=0.800 Brier=0.177 ESS=0.657  ALL=0.869 FILTER=0.720 IPW_est=0.697 IPW_oracle=0.698 SMITH_env=0.871 ALL_calib=0.869  best=SMITH_env  [16s]
+  iso        D=   2km seed=2  AUC=0.771 Brier=0.191 ESS=0.506  ALL=0.870 FILTER=0.710 IPW_est=0.688 IPW_oracle=0.701 SMITH_env=0.872 ALL_calib=0.870  best=SMITH_env  [16s]
+  toward_HQ  D=   2km seed=0  AUC=0.784 Brier=0.183 ESS=0.654  ALL=0.879 FILTER=0.717 IPW_est=0.697 IPW_oracle=0.701 SMITH_env=0.883 ALL_calib=0.883  best=ALL_calib  [16s]
+  toward_HQ  D=   2km seed=1  AUC=0.799 Brier=0.178 ESS=0.639  ALL=0.868 FILTER=0.720 IPW_est=0.685 IPW_oracle=0.698 SMITH_env=0.871 ALL_calib=0.869  best=SMITH_env  [16s]
+  toward_HQ  D=   2km seed=2  AUC=0.770 Brier=0.191 ESS=0.502  ALL=0.870 FILTER=0.710 IPW_est=0.677 IPW_oracle=0.701 SMITH_env=0.872 ALL_calib=0.870  best=SMITH_env  [16s]
+  away_HQ    D=   2km seed=0  AUC=0.785 Brier=0.182 ESS=0.692  ALL=0.882 FILTER=0.717 IPW_est=0.683 IPW_oracle=0.701 SMITH_env=0.883 ALL_calib=0.883  best=ALL_calib  [16s]
+  away_HQ    D=   2km seed=1  AUC=0.800 Brier=0.177 ESS=0.658  ALL=0.870 FILTER=0.720 IPW_est=0.693 IPW_oracle=0.698 SMITH_env=0.871 ALL_calib=0.869  best=SMITH_env  [16s]
+  away_HQ    D=   2km seed=2  AUC=0.769 Brier=0.192 ESS=0.496  ALL=0.868 FILTER=0.710 IPW_est=0.691 IPW_oracle=0.701 SMITH_env=0.872 ALL_calib=0.870  best=SMITH_env  [17s]
+  iso        D=  10km seed=0  AUC=0.760 Brier=0.200 ESS=0.478  ALL=0.849 FILTER=0.726 IPW_est=0.698 IPW_oracle=0.699 SMITH_env=0.853 ALL_calib=0.848  best=SMITH_env  [41s]
+  iso        D=  10km seed=1  AUC=0.800 Brier=0.179 ESS=0.651  ALL=0.862 FILTER=0.729 IPW_est=0.695 IPW_oracle=0.712 SMITH_env=0.866 ALL_calib=0.855  best=SMITH_env  [41s]
+  iso        D=  10km seed=2  AUC=0.792 Brier=0.181 ESS=0.615  ALL=0.855 FILTER=0.732 IPW_est=0.692 IPW_oracle=0.696 SMITH_env=0.860 ALL_calib=0.858  best=SMITH_env  [42s]
+  toward_HQ  D=  10km seed=0  AUC=0.748 Brier=0.206 ESS=0.492  ALL=0.851 FILTER=0.726 IPW_est=0.692 IPW_oracle=0.699 SMITH_env=0.853 ALL_calib=0.848  best=SMITH_env  [41s]
+  toward_HQ  D=  10km seed=1  AUC=0.792 Brier=0.184 ESS=0.526  ALL=0.857 FILTER=0.729 IPW_est=0.694 IPW_oracle=0.712 SMITH_env=0.866 ALL_calib=0.855  best=SMITH_env  [41s]
+  toward_HQ  D=  10km seed=2  AUC=0.785 Brier=0.183 ESS=0.479  ALL=0.860 FILTER=0.732 IPW_est=0.682 IPW_oracle=0.696 SMITH_env=0.860 ALL_calib=0.858  best=ALL  [42s]
+  away_HQ    D=  10km seed=0  AUC=0.770 Brier=0.192 ESS=0.416  ALL=0.853 FILTER=0.726 IPW_est=0.703 IPW_oracle=0.699 SMITH_env=0.853 ALL_calib=0.848  best=ALL  [41s]
+  away_HQ    D=  10km seed=1  AUC=0.808 Brier=0.175 ESS=0.599  ALL=0.861 FILTER=0.729 IPW_est=0.696 IPW_oracle=0.712 SMITH_env=0.866 ALL_calib=0.855  best=SMITH_env  [41s]
+  away_HQ    D=  10km seed=2  AUC=0.796 Brier=0.180 ESS=0.451  ALL=0.857 FILTER=0.732 IPW_est=0.694 IPW_oracle=0.696 SMITH_env=0.860 ALL_calib=0.858  best=SMITH_env  [42s]
+  iso        D=  25km seed=0  AUC=0.819 Brier=0.169 ESS=0.342  ALL=0.842 FILTER=0.727 IPW_est=0.696 IPW_oracle=0.717 SMITH_env=0.822 ALL_calib=0.833  best=ALL  [70s]
+  iso        D=  25km seed=1  AUC=0.835 Brier=0.158 ESS=0.586  ALL=0.839 FILTER=0.722 IPW_est=0.697 IPW_oracle=0.698 SMITH_env=0.818 ALL_calib=0.828  best=ALL  [71s]
+  iso        D=  25km seed=2  AUC=0.804 Brier=0.175 ESS=0.292  ALL=0.846 FILTER=0.718 IPW_est=0.695 IPW_oracle=0.705 SMITH_env=0.827 ALL_calib=0.831  best=ALL  [69s]
+  toward_HQ  D=  25km seed=0  AUC=0.770 Brier=0.192 ESS=0.341  ALL=0.837 FILTER=0.727 IPW_est=0.717 IPW_oracle=0.717 SMITH_env=0.822 ALL_calib=0.833  best=ALL  [70s]
+  toward_HQ  D=  25km seed=1  AUC=0.772 Brier=0.193 ESS=0.272  ALL=0.833 FILTER=0.722 IPW_est=0.688 IPW_oracle=0.698 SMITH_env=0.818 ALL_calib=0.828  best=ALL  [71s]
+  toward_HQ  D=  25km seed=2  AUC=0.745 Brier=0.206 ESS=0.358  ALL=0.842 FILTER=0.718 IPW_est=0.673 IPW_oracle=0.705 SMITH_env=0.827 ALL_calib=0.831  best=ALL  [70s]
+  away_HQ    D=  25km seed=0  AUC=0.868 Brier=0.140 ESS=0.646  ALL=0.835 FILTER=0.727 IPW_est=0.708 IPW_oracle=0.717 SMITH_env=0.822 ALL_calib=0.833  best=ALL  [71s]
+  away_HQ    D=  25km seed=1  AUC=0.862 Brier=0.144 ESS=0.437  ALL=0.838 FILTER=0.722 IPW_est=0.699 IPW_oracle=0.698 SMITH_env=0.818 ALL_calib=0.828  best=ALL  [72s]
+  away_HQ    D=  25km seed=2  AUC=0.841 Brier=0.155 ESS=0.452  ALL=0.837 FILTER=0.718 IPW_est=0.697 IPW_oracle=0.705 SMITH_env=0.827 ALL_calib=0.831  best=ALL  [70s]
+
+means -> emp3_semisynth_summary.csv
