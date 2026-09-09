@@ -1,0 +1,72 @@
+================================================================================================================
+EXPERIMENT 3 — MISSPECIFICATION   (honest build; attenuation via learner-agnostic eff_coef)
+================================================================================================================
+
+(Q-A) DOES THE FORMULA STILL PREDICT ATTENUATION?
+      ratio_real = eff_coef_obs / eff_coef_true ;  ratio_pred = (1 - mu/dm) * (var_true/var_obs)
+
+      variant              n    Pearson r   slope    MAE      | per-regime real vs pred (iso / toward / away)
+      base                 18    +0.997      0.95   0.037    | +0.61/+0.55  +0.01/+0.01  +1.21/+1.26
+      niche_bimodal        18    +0.969      0.56   0.197    | +0.91/+0.64  +0.69/+0.39  +1.13/+1.14
+      niche_skewed         18    +0.995      1.03   0.053    | +0.56/+0.46  -0.08/-0.08  +1.21/+1.17
+      quality_quadratic    18    +0.999      0.54   0.464    | +0.30/+0.63  -0.30/-0.49  +0.94/+1.81
+      quality_threshold    18    +0.994      0.66   0.164    | +0.43/+0.52  +0.04/+0.05  +0.82/+1.21
+      env_corr_0.6         18    +0.991      0.94   0.057    | +0.60/+0.50  -0.03/-0.03  +1.16/+1.23
+      prop_linear          18    +0.998      0.97   0.045    | +0.47/+0.55  +0.01/+0.01  +1.21/+1.26
+      prop_rf              18    +0.994      0.88   0.061    | +0.59/+0.55  +0.02/+0.01  +1.12/+1.26
+      retain_0.30          18    +0.973      1.10   0.161    | +0.73/+0.44  +0.12/+0.08  +1.18/+1.02
+      retain_0.85          18    +0.995      0.74   0.211    | +0.46/+0.68  +0.04/+0.06  +1.08/+1.47
+      n_occ_600            18    +0.989      0.92   0.059    | +0.62/+0.55  +0.01/+0.01  +1.14/+1.23
+
+      pooled over ALL variants:
+      n = 198   Pearson r = 0.918   real = 0.783*pred +0.098   MAE = 0.137
+
+(Q-B) DOES THE REGIME ORDERING HOLD?   (winner per variant x regime, TIE if margin < 0.005)
+      variant                                     iso                 toward_HQ                   away_HQ
+      base                     ALL 0.997 (2nd SMITH)    SMITH 0.912 (2nd IPWc)    SMITH 0.993 (2nd IPWc)
+      niche_bimodal              ALL 0.641 (2nd IPW)      IPWc 0.623 (2nd IPW)     TIE 0.648 (2nd SMITH)
+      niche_skewed             ALL 0.996 (2nd SMITH)  SMITH 0.963 (2nd FILTER)    SMITH 0.992 (2nd IPWc)
+      quality_quadratic          TIE 0.998 (2nd IPW)  SMITH 0.972 (2nd FILTER)  SMITH 0.991 (2nd FILTER)
+      quality_threshold         TIE 0.997 (2nd IPWc)    SMITH 0.914 (2nd IPWc)     SMITH 0.992 (2nd IPW)
+      env_corr_0.6             ALL 0.997 (2nd SMITH)  SMITH 0.904 (2nd FILTER)    SMITH 0.993 (2nd IPWc)
+      prop_linear              ALL 0.997 (2nd SMITH)    SMITH 0.912 (2nd IPWc)    SMITH 0.993 (2nd IPWc)
+      prop_rf                  ALL 0.997 (2nd SMITH)    SMITH 0.912 (2nd IPWc)     SMITH 0.993 (2nd IPW)
+      retain_0.30              ALL 0.995 (2nd SMITH)    SMITH 0.824 (2nd IPWc)    SMITH 0.980 (2nd IPWc)
+      retain_0.85              ALL 0.998 (2nd SMITH)    SMITH 0.975 (2nd IPWc)    SMITH 0.998 (2nd IPWc)
+      n_occ_600                ALL 0.995 (2nd SMITH)    SMITH 0.918 (2nd IPWc)    SMITH 0.991 (2nd IPWc)
+
+      full recovery table (mean over seeds):
+      variant              regime              ALL   FILTER      IPW     IPWc    SMITH   IPW_orc
+      base                iso               0.997    0.866    0.918    0.932    0.954   0.970
+      base                toward_HQ         0.829    0.866    0.840    0.870    0.912   0.970
+      base                away_HQ           0.811    0.866    0.937    0.946    0.993   0.970
+      niche_bimodal       iso               0.641    0.546    0.634    0.633    0.623   0.645
+      niche_bimodal       toward_HQ         0.550    0.546    0.615    0.623    0.599   0.645
+      niche_bimodal       away_HQ           0.510    0.546    0.640    0.648    0.643   0.645
+      niche_skewed        iso               0.996    0.940    0.957    0.966    0.981   0.989
+      niche_skewed        toward_HQ         0.900    0.940    0.910    0.931    0.963   0.989
+      niche_skewed        away_HQ           0.856    0.940    0.970    0.972    0.992   0.989
+      quality_quadratic   iso               0.998    0.964    0.998    0.998    0.983   0.999
+      quality_quadratic   toward_HQ         0.887    0.964    0.903    0.930    0.972   0.999
+      quality_quadratic   away_HQ           0.847    0.964    0.876    0.902    0.991   0.999
+      quality_threshold   iso               0.997    0.869    0.993    0.996    0.954   0.999
+      quality_threshold   toward_HQ         0.833    0.869    0.860    0.890    0.914   0.999
+      quality_threshold   away_HQ           0.807    0.869    0.966    0.952    0.992   0.999
+      env_corr_0.6        iso               0.997    0.863    0.910    0.927    0.948   0.970
+      env_corr_0.6        toward_HQ         0.811    0.863    0.821    0.852    0.904   0.970
+      env_corr_0.6        away_HQ           0.741    0.863    0.930    0.941    0.993   0.970
+      prop_linear         iso               0.997    0.866    0.930    0.936    0.954   0.970
+      prop_linear         toward_HQ         0.829    0.866    0.865    0.881    0.912   0.970
+      prop_linear         away_HQ           0.811    0.866    0.942    0.948    0.993   0.970
+      prop_rf             iso               0.997    0.866    0.913    0.924    0.954   0.970
+      prop_rf             toward_HQ         0.829    0.866    0.845    0.871    0.912   0.970
+      prop_rf             away_HQ           0.811    0.866    0.928    0.925    0.993   0.970
+      retain_0.30         iso               0.995    0.674    0.811    0.852    0.905   0.939
+      retain_0.30         toward_HQ         0.631    0.674    0.654    0.728    0.824   0.939
+      retain_0.30         away_HQ           0.598    0.674    0.897    0.908    0.980   0.939
+      retain_0.85         iso               0.998    0.967    0.980    0.983    0.985   0.993
+      retain_0.85         toward_HQ         0.959    0.967    0.963    0.968    0.975   0.993
+      retain_0.85         away_HQ           0.947    0.967    0.982    0.986    0.998   0.993
+      n_occ_600           iso               0.995    0.876    0.925    0.939    0.957   0.972
+      n_occ_600           toward_HQ         0.838    0.876    0.854    0.880    0.918   0.972
+      n_occ_600           away_HQ           0.809    0.876    0.940    0.950    0.991   0.972

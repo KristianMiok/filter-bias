@@ -125,6 +125,11 @@ class SimConfig:
     # ---- FIX 2 ----
     propensity_on: str = "obs"      # "obs": practitioner (e_obs). "true": original (e_true)
                                     # "calib": disk-mean env for low-quality (regression calibration)
+    # ---- EXP 3: misspecification knobs (R1 #4) ----
+    niche_shape: str = "gaussian"   # "gaussian" | "bimodal" | "skewed"
+    quality_link: str = "linear"    # f(u) in logit: "linear" | "quadratic" | "threshold"
+    env_corr: float = 0.0           # correlation induced between E1 and E2
+    propensity_learner: str = "logit_quad"   # "logit_quad" | "logit_linear" | "rf"
     # ---- EXP 2: analytical grain ----
     grain: int = 1                  # block-average the env layers the modeller reads, by this
                                     # factor. Truth stays at the fine scale. grain > 1 raises the
@@ -151,6 +156,10 @@ def make_env_field(cfg: SimConfig) -> Tuple[np.ndarray, np.ndarray, np.ndarray, 
         smooth = (smooth - smooth.mean()) / smooth.std()
         layers.append(smooth)
     E1, E2 = layers
+    if abs(cfg.env_corr) > 1e-9:
+        rho_e = float(np.clip(cfg.env_corr, -0.99, 0.99))
+        E2 = rho_e * E1 + np.sqrt(1 - rho_e ** 2) * E2
+        E2 = (E2 - E2.mean()) / E2.std()
     gE1_r, gE1_c = np.gradient(E1)
     return E1, E2, gE1_r, gE1_c
 
@@ -159,7 +168,18 @@ def true_suitability(E1: np.ndarray, E2: np.ndarray, cfg: SimConfig) -> np.ndarr
     """Gaussian response surface, normalized to max 1."""
     cx, cy = cfg.niche_center
     sx, sy = cfg.niche_sd
-    S = np.exp(-0.5 * (((E1 - cx) / sx) ** 2 + ((E2 - cy) / sy) ** 2))
+    if cfg.niche_shape == "gaussian":
+        S = np.exp(-0.5 * (((E1 - cx) / sx) ** 2 + ((E2 - cy) / sy) ** 2))
+    elif cfg.niche_shape == "bimodal":
+        # two optima on E1: the quadratic learner cannot represent this
+        S = (np.exp(-0.5 * (((E1 + 0.9) / (0.5 * sx)) ** 2 + ((E2 - cy) / sy) ** 2))
+             + np.exp(-0.5 * (((E1 - 0.9) / (0.5 * sx)) ** 2 + ((E2 - cy) / sy) ** 2)))
+    elif cfg.niche_shape == "skewed":
+        # skew-normal-like on E1: asymmetric tolerance
+        z = (E1 - cx) / sx
+        S = np.exp(-0.5 * (z ** 2 + ((E2 - cy) / sy) ** 2)) * (1.0 / (1.0 + np.exp(-3.0 * z)))
+    else:
+        raise ValueError(f"unknown niche_shape {cfg.niche_shape!r}")
     return S / S.max()
 
 
@@ -199,8 +219,17 @@ def assign_quality(e_occ: np.ndarray, cfg: SimConfig, rng) -> Tuple[np.ndarray, 
     """Return (r, p_true_quality) where p = P(r=1|e). u(e) = standardized E1."""
     u = e_occ[:, 0]
     u = (u - u.mean()) / (u.std() + 1e-12)
-    alpha = _calibrate_alpha(u, cfg.beta, cfg.retain_rate)
-    p = 1.0 / (1.0 + np.exp(-(alpha + cfg.beta * u)))
+    if cfg.quality_link == "linear":
+        f = u
+    elif cfg.quality_link == "quadratic":
+        f = u + 0.6 * (u ** 2 - 1.0)
+    elif cfg.quality_link == "threshold":
+        f = np.tanh(2.5 * u)
+    else:
+        raise ValueError(f"unknown quality_link {cfg.quality_link!r}")
+    f = (f - f.mean()) / (f.std() + 1e-12)
+    alpha = _calibrate_alpha(f, cfg.beta, cfg.retain_rate)
+    p = 1.0 / (1.0 + np.exp(-(alpha + cfg.beta * f)))
     r = (rng.uniform(size=p.size) < p).astype(int)
     return r, p
 
@@ -453,24 +482,46 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
         raise ValueError(f"unknown propensity_on {cfg.propensity_on!r}")
 
     def fit_prop(e_):
-        m = LogisticRegression(C=1e6, solver="lbfgs", max_iter=2000)
-        m.fit(_design(e_), r)
-        return m, m.predict_proba(_design(e_))[:, 1]
+        if cfg.propensity_learner == "logit_quad":
+            m = LogisticRegression(C=1e6, solver="lbfgs", max_iter=2000)
+            X = _design(e_)
+        elif cfg.propensity_learner == "logit_linear":
+            m = LogisticRegression(C=1e6, solver="lbfgs", max_iter=2000)
+            X = e_
+        elif cfg.propensity_learner == "rf":
+            from sklearn.ensemble import RandomForestClassifier
+            m = RandomForestClassifier(n_estimators=200, min_samples_leaf=20,
+                                       n_jobs=-1, random_state=seed)
+            X = e_
+        else:
+            raise ValueError(f"unknown propensity_learner {cfg.propensity_learner!r}")
+        m.fit(X, r)
+        return m, m.predict_proba(X)[:, 1]
+
+    def effective_coef(p_all, e_):
+        """Learner-agnostic attenuation measure: OLS slope of logit(p_hat) on E1.
+        For a linear-logit propensity this recovers the coefficient itself; for RF or
+        any other learner it is the effective retention gradient the weights encode."""
+        z = np.log(np.clip(p_all, 1e-4, 1 - 1e-4) / np.clip(1 - p_all, 1e-4, None))
+        x = e_[:, 0]
+        return float(np.polyfit(x, z, 1)[0])
 
     prop, p_hat_all = fit_prop(e_prop)
     p_hat = p_hat_all[hi]
     prop_auc = float(roc_auc_score(r, p_hat_all)) if r.min() != r.max() else float("nan")
     prop_brier = float(brier_score_loss(r, p_hat_all))
-    prop_coef_E1 = float(prop.coef_[0, 0])
+    prop_coef_E1 = float(prop.coef_[0, 0]) if hasattr(prop, "coef_") else float("nan")
 
     # always also fit the calibrated propensity, for side-by-side comparison
     prop_c, p_hat_all_c = fit_prop(e_calib)
     p_hat_c = p_hat_all_c[hi]
-    prop_coef_E1_calib = float(prop_c.coef_[0, 0])
+    prop_coef_E1_calib = float(prop_c.coef_[0, 0]) if hasattr(prop_c, "coef_") else float("nan")
 
     # oracle-covariate propensity: reference for the attenuation formula
-    prop_t, _ = fit_prop(e_true)
-    prop_coef_E1_true = float(prop_t.coef_[0, 0])
+    prop_t, p_hat_all_t = fit_prop(e_true)
+    prop_coef_E1_true = float(prop_t.coef_[0, 0]) if hasattr(prop_t, "coef_") else float("nan")
+    eff_coef_obs = effective_coef(p_hat_all, e_prop)
+    eff_coef_true = effective_coef(p_hat_all_t, e_true)
 
     def trim(w):
         cap = np.percentile(w, cfg.weight_trim_pct)
@@ -528,6 +579,14 @@ def run_one(cfg: SimConfig, seed: int) -> Dict[str, float]:
     out["diag_prop_coef_E1"] = prop_coef_E1
     out["diag_prop_coef_E1_calib"] = prop_coef_E1_calib
     out["diag_prop_coef_E1_true"] = prop_coef_E1_true
+    out["diag_eff_coef_obs"] = eff_coef_obs
+    out["diag_eff_coef_true"] = eff_coef_true
+    out["cfg_niche_shape"] = cfg.niche_shape
+    out["cfg_quality_link"] = cfg.quality_link
+    out["cfg_env_corr"] = cfg.env_corr
+    out["cfg_propensity_learner"] = cfg.propensity_learner
+    out["cfg_retain_rate"] = cfg.retain_rate
+    out["cfg_n_occ"] = cfg.n_occ
     # attenuation-formula ingredients (true class separation on E1, mean displacement on E1)
     out["diag_true_sep_E1"] = float(e_true[hi, 0].mean() - e_true[low, 0].mean()) if low.any() else float("nan")
     out["diag_obs_sep_E1"] = float(e_obs[hi, 0].mean() - e_obs[low, 0].mean()) if low.any() else float("nan")
