@@ -26,3 +26,6 @@ PAPER*
 *.rar
 anonymize_repo.py
 make_lucian_zip.py
+data/
+reports/odonata_de_occurrences.csv
+*.csv.gz
