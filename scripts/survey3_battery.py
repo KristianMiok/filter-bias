@@ -84,8 +84,10 @@ def eff_coef(p, axis):
     return float(np.polyfit(axis, z, 1)[0])
 
 
-def layer_variogram(stack, meta, lags_km=(0.5, 1, 2, 5, 10, 25, 50), n_pairs=250000):
-    """varrho(h) of the standardized 19-layer stack, from random pixel pairs."""
+def layer_variogram(stack, meta, lags_km=(0.5, 1, 2, 5, 10, 25, 50), n_anchor=30000):
+    """varrho(h) of the standardized 19-layer stack: anchor pixels + random
+    offset AT each lag, so short lags are populated (uniform random pairs in a
+    ~1000 km window almost never land below 10 km)."""
     L, H, W = stack.shape
     Z = stack.reshape(L, -1)
     mu = np.nanmean(Z, axis=1, keepdims=True); sd = np.nanstd(Z, axis=1, keepdims=True) + 1e-12
@@ -94,15 +96,21 @@ def layer_variogram(stack, meta, lags_km=(0.5, 1, 2, 5, 10, 25, 50), n_pairs=250
     idx_valid = np.where(valid)[0]
     km_per_px_y = abs(meta["dy"]) * 110.54
     km_per_px_x = abs(meta["dx"]) * 111.32 * np.cos(np.radians(51.0))
-    i = RNG.choice(idx_valid, n_pairs); j = RNG.choice(idx_valid, n_pairs)
-    ri, ci = np.divmod(i, W); rj, cj = np.divmod(j, W)
-    dist = np.sqrt(((ri - rj) * km_per_px_y) ** 2 + ((ci - cj) * km_per_px_x) ** 2)
-    prod = np.nanmean(Z[:, i] * Z[:, j], axis=0)
-    rows, edges = [], [0.0] + list(lags_km)
-    for lo, hi in zip(edges[:-1], edges[1:]):
-        m = (dist > lo) & (dist <= hi)
-        rows.append(dict(lag_km=hi, n_pairs=int(m.sum()),
-                         rho=float(np.nanmean(prod[m])) if m.sum() > 100 else np.nan))
+    rows = []
+    for h in lags_km:
+        i = RNG.choice(idx_valid, n_anchor)
+        ri, ci = np.divmod(i, W)
+        ang = RNG.uniform(0, 2 * np.pi, n_anchor)
+        rj = ri + np.round(h * np.sin(ang) / km_per_px_y).astype(int)
+        cj = ci + np.round(h * np.cos(ang) / km_per_px_x).astype(int)
+        ok = (rj >= 0) & (rj < H) & (cj >= 0) & (cj < W)
+        j = rj[ok] * W + cj[ok]
+        ok2 = valid[j]
+        ii, jj = i[ok][ok2], j[ok2]
+        if len(ii) < 200:
+            rows.append(dict(lag_km=h, n_pairs=len(ii), rho=np.nan)); continue
+        prod = np.nanmean(Z[:, ii] * Z[:, jj], axis=0)
+        rows.append(dict(lag_km=h, n_pairs=len(ii), rho=float(np.nanmean(prod))))
     return pd.DataFrame(rows)
 
 
