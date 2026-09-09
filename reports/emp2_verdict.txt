@@ -1,0 +1,13 @@
+============================================================================================================
+EMP 2 — CONSEQUENCE RERUN, UNIFIED PROPENSITY + KAPPA-ENVELOPE  (RF learner, target-group background)
+============================================================================================================
+  Astacus astacus                AUC=0.924 ESS=0.173 gated=YES  D(ALL,FILTER)=0.615  D(FILTER,IPW)=0.826  env_width=0.552   [20s]
+  Austropotamobius pallipes      AUC=0.960 ESS=0.028 gated=YES  D(ALL,FILTER)=0.755  D(FILTER,IPW)=0.853  env_width=0.727   [20s]
+  Pacifastacus leniusculus       AUC=0.865 ESS=0.709 gated=no   D(ALL,FILTER)=0.799  D(FILTER,IPW)=0.933  env_width=0.602   [26s]
+  Procambarus clarkii            AUC=0.736 ESS=0.280 gated=YES  D(ALL,FILTER)=0.826  D(FILTER,IPW)=0.887  env_width=0.795   [50s]
+  Faxonius limosus               AUC=0.751 ESS=0.512 gated=no   D(ALL,FILTER)=0.858  D(FILTER,IPW)=0.926  env_width=0.710   [25s]
+  Pontastacus leptodactylus      AUC=0.617 ESS=0.050 gated=YES  D(ALL,FILTER)=0.816  D(FILTER,IPW)=0.886  env_width=0.649   [19s]
+  Austropotamobius torrentium    AUC=0.609 ESS=0.146 gated=YES  D(ALL,FILTER)=0.675  D(FILTER,IPW)=0.846  env_width=0.430   [19s]
+
+GATING RULE: ESS(p99) < 0.3 -> IPW point estimate NOT REPORTABLE; envelope only.
+pairwise metrics -> emp2_surfaces_summary.csv ; envelope -> emp2_envelope.csv
