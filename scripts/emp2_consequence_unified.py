@@ -181,14 +181,15 @@ def main():
                              env_auc=auc, ess_p99=ess, **surf_metrics(surfaces[a], surfaces[b])))
         ks = [f"IPW_k{k:g}" if k != 1.0 else "IPW" for k in KAPPAS]
         env_D = schoener_d(surfaces[ks[0]], surfaces[ks[-1]])
+        env_D_L2 = schoener_d(surfaces["IPW_k0.5"], surfaces["IPW_k2"])
         d_to_filter = {k: schoener_d(surfaces[k], surfaces["FILTER"]) for k in ks}
         env_rows.append(dict(species=sp, env_auc=auc, ess_p99=ess, ipw_gated=gated,
-                             env_width_D=env_D,
+                             env_width_D=env_D, env_width_D_L2=env_D_L2,
                              **{f"D_vs_FILTER_{k}": v for k, v in d_to_filter.items()}))
         lines.append(f"  {sp[:30]:30s} AUC={auc:.3f} ESS={ess:.3f} gated={'YES' if gated else 'no '}  "
                      f"D(ALL,FILTER)={surf_metrics(surfaces['ALL'],surfaces['FILTER'])['schoener_D']:.3f}  "
                      f"D(FILTER,IPW)={surf_metrics(surfaces['FILTER'],surfaces['IPW'])['schoener_D']:.3f}  "
-                     f"env_width={env_D:.3f}   [{time.time()-t0:.0f}s]")
+                     f"env_width(L4)={env_D:.3f}  env_width(L2)={env_D_L2:.3f}   [{time.time()-t0:.0f}s]")
         print(lines[-1])
 
     pd.DataFrame(rows).to_csv(os.path.join(REPORTS, "emp2_surfaces_summary.csv"), index=False)
