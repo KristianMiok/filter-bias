@@ -1,0 +1,38 @@
+{
+  "country": "DE",
+  "threshold_m": 100,
+  "cap_per_stratum": 10000,
+  "groups": {
+    "Odonata": {
+      "taxonKey": 789,
+      "n": 49827,
+      "n_usable": 42274
+    },
+    "Aves": {
+      "taxonKey": 212,
+      "n": 50443,
+      "n_usable": 28839
+    },
+    "Lepidoptera": {
+      "taxonKey": 797,
+      "n": 56343,
+      "n_usable": 40289
+    },
+    "Coleoptera": {
+      "taxonKey": 1470,
+      "n": 53941,
+      "n_usable": 39898
+    },
+    "Orchidaceae": {
+      "taxonKey": 7689,
+      "n": 42504,
+      "n_usable": 24168
+    },
+    "Asteraceae": {
+      "taxonKey": 3065,
+      "n": 58108,
+      "n_usable": 29363
+    }
+  },
+  "pulled_at": "2026-09-09"
+}
