@@ -1,0 +1,168 @@
+====================================================================================================
+EXPERIMENT 0c — OBSERVABLE SIGNATURE AS AN EXPLICIT DECISION RULE
+====================================================================================================
+
+480 runs; beta ~ U(0,4); D in {6,10,16}; corr_len in {8,12,18}; regimes balanced.
+
+(T1) REGIME, 3-class, observable features only
+    [F_basic]  depth=3  5-fold CV accuracy = 0.727   (chance = 0.333)
+      pred       away_HQ  iso  toward_HQ
+      true                              
+      away_HQ        128   14         18
+      iso              9   98         53
+      toward_HQ        0   37        123
+      fitted tree (full data):
+        |--- diag_prop_brier <= 0.13
+        |   |--- diag_prop_brier <= 0.11
+        |   |   |--- class: away_HQ
+        |   |--- diag_prop_brier >  0.11
+        |   |   |--- class: away_HQ
+        |--- diag_prop_brier >  0.13
+        |   |--- diag_prop_brier <= 0.20
+        |   |   |--- diag_w_p99 <= 6.24
+        |   |   |   |--- class: iso
+        |   |   |--- diag_w_p99 >  6.24
+        |   |   |   |--- class: toward_HQ
+        |   |--- diag_prop_brier >  0.20
+        |   |   |--- diag_ess_frac <= 0.87
+        |   |   |   |--- class: toward_HQ
+        |   |   |--- diag_ess_frac >  0.87
+        |   |   |   |--- class: toward_HQ
+
+    [F_calib = F_basic + coef_gap + dess + rho_D]  depth=3  5-fold CV accuracy = 0.750   (chance = 0.333)
+      pred       away_HQ  iso  toward_HQ
+      true                              
+      away_HQ        128   27          5
+      iso              9  101         50
+      toward_HQ        0   29        131
+      fitted tree (full data):
+        |--- diag_prop_brier <= 0.13
+        |   |--- diag_prop_brier <= 0.11
+        |   |   |--- class: away_HQ
+        |   |--- diag_prop_brier >  0.11
+        |   |   |--- class: away_HQ
+        |--- diag_prop_brier >  0.13
+        |   |--- diag_prop_brier <= 0.20
+        |   |   |--- dess <= 0.31
+        |   |   |   |--- class: iso
+        |   |   |--- dess >  0.31
+        |   |   |   |--- class: toward_HQ
+        |   |--- diag_prop_brier >  0.20
+        |   |   |--- coef_gap <= 0.07
+        |   |   |   |--- class: toward_HQ
+        |   |   |--- coef_gap >  0.07
+        |   |   |   |--- class: toward_HQ
+
+(T2) DOES IPW BEAT FILTER?  (actionable)
+    [F_basic]  depth=3  5-fold CV accuracy = 0.783   (chance = 0.629)
+      pred   0    1
+      true         
+      0     97   81
+      1     23  279
+      fitted tree (full data):
+        |--- diag_prop_brier <= 0.15
+        |   |--- diag_w_p99 <= 8.18
+        |   |   |--- class: 1
+        |   |--- diag_w_p99 >  8.18
+        |   |   |--- class: 1
+        |--- diag_prop_brier >  0.15
+        |   |--- diag_prop_brier <= 0.22
+        |   |   |--- diag_w_p99 <= 6.24
+        |   |   |   |--- class: 1
+        |   |   |--- diag_w_p99 >  6.24
+        |   |   |   |--- class: 0
+        |   |--- diag_prop_brier >  0.22
+        |   |   |--- diag_propensity_auc <= 0.61
+        |   |   |   |--- class: 0
+        |   |   |--- diag_propensity_auc >  0.61
+        |   |   |   |--- class: 0
+
+    [F_calib]  depth=3  5-fold CV accuracy = 0.781   (chance = 0.629)
+      pred    0    1
+      true          
+      0     157   21
+      1      84  218
+      fitted tree (full data):
+        |--- diag_prop_brier <= 0.15
+        |   |--- diag_w_p99 <= 8.18
+        |   |   |--- class: 1
+        |   |--- diag_w_p99 >  8.18
+        |   |   |--- class: 1
+        |--- diag_prop_brier >  0.15
+        |   |--- dess <= 0.01
+        |   |   |--- diag_prop_brier <= 0.21
+        |   |   |   |--- class: 1
+        |   |   |--- diag_prop_brier >  0.21
+        |   |   |   |--- class: 1
+        |   |--- dess >  0.01
+        |   |   |--- dess <= 0.29
+        |   |   |   |--- class: 0
+        |   |   |--- dess >  0.29
+        |   |   |   |--- class: 0
+
+(T3) PROPENSITY COLLAPSE  (|eff ratio| < 0.5)
+    [F_basic]  depth=3  5-fold CV accuracy = 0.773   (chance = 0.727)
+      pred    0   1
+      true         
+      0     302  47
+      1      62  69
+      fitted tree (full data):
+        |--- diag_prop_brier <= 0.21
+        |   |--- diag_propensity_auc <= 0.82
+        |   |   |--- diag_w_p99 <= 6.28
+        |   |   |   |--- class: 0
+        |   |   |--- diag_w_p99 >  6.28
+        |   |   |   |--- class: 0
+        |   |--- diag_propensity_auc >  0.82
+        |   |   |--- class: 0
+        |--- diag_prop_brier >  0.21
+        |   |--- diag_propensity_auc <= 0.64
+        |   |   |--- diag_prop_brier <= 0.23
+        |   |   |   |--- class: 1
+        |   |   |--- diag_prop_brier >  0.23
+        |   |   |   |--- class: 1
+        |   |--- diag_propensity_auc >  0.64
+        |   |   |--- diag_prop_brier <= 0.22
+        |   |   |   |--- class: 1
+        |   |   |--- diag_prop_brier >  0.22
+        |   |   |   |--- class: 0
+
+    [F_calib]  depth=3  5-fold CV accuracy = 0.798   (chance = 0.727)
+      pred    0   1
+      true         
+      0     323  26
+      1      71  60
+      fitted tree (full data):
+        |--- diag_prop_brier <= 0.21
+        |   |--- dess <= 0.36
+        |   |   |--- diag_ess_frac <= 0.71
+        |   |   |   |--- class: 0
+        |   |   |--- diag_ess_frac >  0.71
+        |   |   |   |--- class: 0
+        |   |--- dess >  0.36
+        |   |   |--- diag_rho_D <= 0.54
+        |   |   |   |--- class: 1
+        |   |   |--- diag_rho_D >  0.54
+        |   |   |   |--- class: 0
+        |--- diag_prop_brier >  0.21
+        |   |--- coef_gap <= 0.06
+        |   |   |--- diag_w_p99 <= 3.39
+        |   |   |   |--- class: 1
+        |   |   |--- diag_w_p99 >  3.39
+        |   |   |   |--- class: 0
+        |   |--- coef_gap >  0.06
+        |   |   |--- diag_propensity_auc <= 0.65
+        |   |   |   |--- class: 1
+        |   |   |--- diag_propensity_auc >  0.65
+        |   |   |   |--- class: 1
+
+HONESTY CHECKS
+    regime accuracy, beta < 1 (weak coupling)  : 0.600   (n=120)
+    regime accuracy, beta >= 1                 : 0.903   (n=360)
+
+    mean observables by regime (for the paper's signature table):
+                 diag_propensity_auc  diag_ess_frac  coef_gap   dess  diag_rho_D
+      regime                                                                    
+      away_HQ                  0.933          0.225     0.241  0.017       0.755
+      iso                      0.778          0.540     0.089  0.099       0.757
+      toward_HQ                0.695          0.706     0.098  0.209       0.726
