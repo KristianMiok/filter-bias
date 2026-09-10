@@ -118,7 +118,7 @@ def fig3():
             ("isotropic (sim)", 0.778, 0.540, C["iso"]),
             ("toward-precise (sim)", 0.695, 0.706, C["toward_HQ"])]
     for lab, a, e, col in sims:
-        ax.scatter(a, e, marker="*", s=260, color=col, edgecolors="k", zorder=5, label=lab)
+        ax.scatter(a, e, marker="*", s=140, color=col, edgecolors="k", lw=.6, zorder=5, label=lab)
     g = bat[bat.unit == "group"]; sp = bat[bat.unit == "species"]
     ax.scatter(g.auc, g.ess_p99, s=55, color="#66CCEE", edgecolors="k", lw=.5, label="GBIF survey: groups")
     ax.scatter(sp.auc, sp.ess_p99, s=18, color="#66CCEE", alpha=.7, label="GBIF survey: species")
@@ -138,7 +138,8 @@ def fig3():
     ax.set_xlabel("propensity AUC (coupling strength)")
     ax.set_ylabel("ESS fraction of IPW weights (positivity)")
     ax.set_title("Where real datasets sit in the observable signature space", loc="left", fontsize=9.5)
-    ax.legend(fontsize=6.6, frameon=False, loc="upper right")
+    ax.legend(fontsize=6.6, frameon=False, loc="upper right", markerscale=0.75,
+              labelspacing=0.85, handletextpad=0.6, borderpad=0.4)
     fig.tight_layout(); save(fig, "fig3_signature_space")
 
 
