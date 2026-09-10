@@ -131,6 +131,21 @@ the wild exactly where the theory says (herbarium data with km uncertainties).
   survey_datasetkeys_*; crayfish master per original paper's terms;
   reusable audit pipeline sentence (survey1–3 generalize to any region).
 
+## Fig 6 / provenance block (Section 5 + caption material)
+- Geography of quality (Fig 6): provenance-structured, not habitat-structured.
+  naturgucker 79k records 77% imprecise vs Observation.org 71k 11% -> recording
+  convention (site-level vs GPS) drives the map.
+- Orchidaceae Low is bimodal: <5 km mass (62%; site/quadrant conventions) and a
+  15-40 km mode (35%; taxon geoprivacy obscuring: iNat 69%, Obs.org 89%
+  imprecise for orchids vs Pl@ntNet 4%). Trough at 5-15 km (573 records).
+- Discussion insight: conservation privacy policy manufactures the dangerous
+  regime for exactly the taxa SDMs matter most for; corrections then operate at
+  scales where varrho(u) genuinely falls (0.87 at 25 km). Ties O. militaris
+  signature + dess = -0.25 + Fig 6b into one mechanism chain.
+- Methods sentence: obscured coordinates are randomised within cells, i.e.
+  genuine displacement, not mere imprecision — consistent with the framework's
+  e_obs formalism.
+
 ## Tables
 - T1 notation + regimes + what is (un)identifiable.
 - T2 crayfish species battery (emp1+emp2 merged; gated column).
