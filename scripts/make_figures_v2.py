@@ -113,7 +113,7 @@ def fig2():
 def fig3():
     bat = pd.read_csv(os.path.join(REP, "survey_battery.csv")).dropna(subset=["auc", "ess_p99"])
     cray = pd.read_csv(os.path.join(REP, "emp2_envelope.csv"))
-    fig, ax = plt.subplots(figsize=(5.6, 4.2))
+    fig, ax = plt.subplots(figsize=(7.3, 4.2))
     sims = [("away-from-precise (sim)", 0.933, 0.225, C["away_HQ"]),
             ("isotropic (sim)", 0.778, 0.540, C["iso"]),
             ("toward-precise (sim)", 0.695, 0.706, C["toward_HQ"])]
@@ -133,13 +133,15 @@ def fig3():
         ax.annotate(r["name"], (r.auc, r.ess_p99), fontsize=6, xytext=(3, -7), textcoords="offset points",
                     style="italic")
     for _, r in cray[cray.ess_p99 < 0.06].iterrows():
-        ax.annotate(r.species, (r.env_auc, r.ess_p99), fontsize=6, xytext=(3, 4), textcoords="offset points",
-                    style="italic")
+        right = r.env_auc > 0.85
+        ax.annotate(r.species, (r.env_auc, r.ess_p99), fontsize=6,
+                    xytext=(-4, 5) if right else (3, 4), textcoords="offset points",
+                    ha="right" if right else "left", style="italic")
     ax.set_xlabel("propensity AUC (coupling strength)")
     ax.set_ylabel("ESS fraction of IPW weights (positivity)")
     ax.set_title("Where real datasets sit in the observable signature space", loc="left", fontsize=9.5)
-    ax.legend(fontsize=6.6, frameon=False, loc="upper right", markerscale=0.75,
-              labelspacing=0.85, handletextpad=0.6, borderpad=0.4)
+    ax.legend(fontsize=7, frameon=False, loc="upper left", bbox_to_anchor=(1.015, 1.0),
+              markerscale=0.9, labelspacing=0.9, handletextpad=0.6, borderpad=0.2)
     fig.tight_layout(); save(fig, "fig3_signature_space")
 
 
