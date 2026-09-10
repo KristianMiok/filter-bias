@@ -157,7 +157,12 @@ the wild exactly where the theory says (herbarium data with km uncertainties).
 ## Supplement
 - S1 Λ=4 envelopes; S2 exp3 misspecification detail; S3 Odonata species
   table + variogram detail; S4 exp0/exp0b full tables (old-vs-new builds);
-  S5 tuned-XGB check (DECIDE: run once in emp2 form or drop).
+- S5 tuned-XGB twin (DONE): diagnosis is learner-independent (same unified
+  propensity, same 5/7 gated); filtering divergence is LARGER under the tuned
+  learner for 7/7 species (A. torrentium D(ALL,FILTER) 0.245 vs RF 0.675),
+  while D(FILTER,IPW) is 0.82-0.90 under both -> contrast, not global
+  roughness; envelope magnitude is pipeline-dependent -> protocol line:
+  compute the envelope with the learner you deploy.
 
 ## Response matrix (separate doc, next step)
 - R1: 13 points — #13 (both fixes) answered by exp0 + open cover-letter

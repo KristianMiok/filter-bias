@@ -29,3 +29,4 @@ make_lucian_zip.py
 data/
 reports/odonata_de_occurrences.csv
 *.csv.gz
+figures/_old/
