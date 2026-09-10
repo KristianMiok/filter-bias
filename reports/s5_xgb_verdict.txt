@@ -1,0 +1,14 @@
+==============================================================================================================
+S5 — TUNED XGBOOST vs RF (same unified propensity, same strategies; Lambda=2 envelope)
+==============================================================================================================
+  Astacus astacus              d4/lr0.1 cvAUC=0.940  gated=YES  D(A,F) xgb=0.464 rf=0.615   D(F,I) xgb=0.834 rf=0.826   envL2 xgb=0.824 rf=0.631   [34s]
+  Austropotamobius pallipes    d6/lr0.1 cvAUC=0.950  gated=YES  D(A,F) xgb=0.498 rf=0.755   D(F,I) xgb=0.879 rf=0.853   envL2 xgb=0.873 rf=0.813   [37s]
+  Pacifastacus leniusculus     d4/lr0.05 cvAUC=0.925  gated=no   D(A,F) xgb=0.743 rf=0.799   D(F,I) xgb=0.904 rf=0.933   envL2 xgb=0.870 rf=0.785   [35s]
+  Procambarus clarkii          d6/lr0.05 cvAUC=0.949  gated=YES  D(A,F) xgb=0.756 rf=0.826   D(F,I) xgb=0.871 rf=0.887   envL2 xgb=0.866 rf=0.890   [63s]
+  Faxonius limosus             d4/lr0.1 cvAUC=0.898  gated=no   D(A,F) xgb=0.770 rf=0.858   D(F,I) xgb=0.880 rf=0.926   envL2 xgb=0.864 rf=0.851   [36s]
+  Pontastacus leptodactylus    d6/lr0.1 cvAUC=0.892  gated=YES  D(A,F) xgb=0.628 rf=0.816   D(F,I) xgb=0.824 rf=0.886   envL2 xgb=0.824 rf=0.821   [36s]
+  Austropotamobius torrentium  d6/lr0.1 cvAUC=0.949  gated=YES  D(A,F) xgb=0.245 rf=0.675   D(F,I) xgb=0.837 rf=0.846   envL2 xgb=0.846 rf=0.503   [35s]
+
+Reading: if regime-relevant quantities (which pairs diverge, who is gated, envelope
+widths' ORDER across species) match the RF column, the framework's conclusions are
+learner-robust; absolute D values are expected to differ by learner smoothness.
