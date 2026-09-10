@@ -95,16 +95,17 @@ def fig2():
     ax.set_xscale("log"); ax.set_xlabel("displacement / uncertainty scale (km)")
     ax.set_ylabel(r"CHELSA layer autocorrelation $\varrho(h)$")
     ax.set_title("(b) real layers, real systems", loc="left")
-    marks = {"odonata": ("Odonata\n(median low-quality unc.)", "#228833"),
+    marks = {"odonata": ("Odonata median\nlow-quality unc.", "#228833"),
              "orchidaceae": ("Orchidaceae", "#EE6677")}
-    for nm, (lab, col) in marks.items():
+    for i, (nm, (lab, col)) in enumerate(marks.items()):
         row = bat[(bat.name == nm) & (bat.unit == "group")]
         if len(row) and np.isfinite(row.med_unc_low_m.iloc[0]):
             x = max(row.med_unc_low_m.iloc[0] / 1000.0, ok.lag_km.min())
             ax.axvline(x, color=col, lw=1.2, ls="--")
-            ax.text(x, 0.74, lab, rotation=90, fontsize=6.5, color=col, ha="right", va="bottom")
+            ax.annotate(lab, (x, 1.0), xytext=(6, -6 - 22 * i), textcoords="offset points",
+                        fontsize=6.5, color=col, ha="left", va="top")
     ax.axvspan(2, 25, color="gray", alpha=0.12)
-    ax.text(7, 0.735, "crayfish\ndonor-swap test", fontsize=6.5, ha="center", color="gray")
+    ax.text(7.5, 0.695, "crayfish donor-swap test", fontsize=6.5, ha="center", color="gray")
     ax.set_ylim(0.68, 1.01)
     fig.tight_layout(); save(fig, "fig2_scale_rhoD")
 
@@ -158,8 +159,9 @@ def fig4():
                    edgecolor="k", lw=0.3, hatch="//" if key == "ORACLE" else None)
         ax.axhline(d.ceil_seed.iloc[0], color="k", lw=1)
         ax.axhline(d.ceil_mcar.iloc[0], color="k", lw=1, ls="--")
-        ax.text(2.42, d.ceil_seed.iloc[0] + .004, "refit ceiling", fontsize=6.5, ha="right")
-        ax.text(2.42, d.ceil_mcar.iloc[0] + .004, "random-deletion ceiling", fontsize=6.5, ha="right")
+        if axis_name == "long_range":
+            ax.text(2.42, d.ceil_seed.iloc[0] + .004, "refit ceiling", fontsize=6.5, ha="right")
+            ax.text(0.62, d.ceil_mcar.iloc[0] - .013, "random-deletion ceiling", fontsize=6.5, ha="center")
         ax.set_xticks(x); ax.set_xticklabels(["isotropic", "toward", "away"])
         ax.set_title(ttl, loc="left"); ax.set_ylim(0.6, 0.92)
     axes[0].set_ylabel("recovery of truth (Spearman)")
