@@ -135,9 +135,11 @@ the wild exactly where the theory says (herbarium data with km uncertainties).
 - Geography of quality (Fig 6): provenance-structured, not habitat-structured.
   naturgucker 79k records 77% imprecise vs Observation.org 71k 11% -> recording
   convention (site-level vs GPS) drives the map.
-- Orchidaceae Low is bimodal: <5 km mass (62%; site/quadrant conventions) and a
-  15-40 km mode (35%; taxon geoprivacy obscuring: iNat 69%, Obs.org 89%
-  imprecise for orchids vs Pl@ntNet 4%). Trough at 5-15 km (573 records).
+- Orchidaceae Low is bimodal: <5 km mass (62%; site-level recording conventions
+  across portals — Obs.org, naturgucker, ArtenFinder all fall here) and a
+  15-40 km mode (35%) that is EXCLUSIVELY iNaturalist geoprivacy obscuring
+  (6,042/6,046 records; ~0.2 deg cell). Pl@ntNet (no obscuring) 4% imprecise.
+  Trough at 5-15 km (573 records).
 - Discussion insight: conservation privacy policy manufactures the dangerous
   regime for exactly the taxa SDMs matter most for; corrections then operate at
   scales where varrho(u) genuinely falls (0.87 at 25 km). Ties O. militaris
